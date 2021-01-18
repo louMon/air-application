@@ -20,8 +20,13 @@ def storeGridToPredict():
     """ Grid function to record grid to predict """
     try:
         data_json = request.get_json()
-        post_data_helper.storeGridToPredictInDB(data_json)
-        return make_response('OK', 200)
+        if (utils.TileDoesNotExist(data_json)):
+            print("Grid does not exist")
+            post_data_helper.storeGridToPredictInDB(data_json)
+            return make_response('Grid recorded', 200)
+        else:
+            print("Grid exists")
+            return make_response('Grid already exists', 200)
     except TypeError as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)

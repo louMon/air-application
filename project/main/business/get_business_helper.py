@@ -23,3 +23,11 @@ def queryCountOfGridPredict():
     """ Helper Eca Noise function to list all zones - No parameters required """
     columns = (GridToPredict.id)
     return session.query(*columns).count()
+
+def TileDoesNotExist(json):
+    print(json)
+    grid_id = session.query(GridToPredict.id).filter_by(lat=str(json["latitude"]), lon=str(json["longitude"])).all()
+    print("Grid id: ",grid_id)
+    if(tile_id):
+        return False
+    return True
