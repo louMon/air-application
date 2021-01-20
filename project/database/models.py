@@ -127,8 +127,8 @@ class InterpolatedPollutants(db.Model):
 
     # Column's definition
     id = db.Column(db.Integer, primary_key=True)
-    pollutant_id = db.Column(db.Integer)
-    grid_id = db.Column(db.Integer)
+    pollutant_id = db.Column(db.Integer,db.ForeignKey('pollutant.id'))
+    grid_id = db.Column(db.Integer,db.ForeignKey('grid_to_predict.id'))
     ppb_value = db.Column(db.Float)
     ug_m3_value = db.Column(db.Float)
     hour_position= db.Column(db.Integer)

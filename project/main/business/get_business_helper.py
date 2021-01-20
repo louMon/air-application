@@ -25,9 +25,7 @@ def queryCountOfGridPredict():
     return session.query(*columns).count()
 
 def TileDoesNotExist(json):
-    print(json)
-    grid_id = session.query(GridToPredict.id).filter_by(lat=str(json["latitude"]), lon=str(json["longitude"])).all()
-    print("Grid id: ",grid_id)
-    if(tile_id):
+    grid_id = session.query(GridToPredict.id).filter_by(lat=str(json["lat"]), lon=str(json["lon"])).all()
+    if(grid_id):
         return False
     return True
