@@ -16,7 +16,7 @@ json_data_grid = json.loads(response_grid.text)
 response_pollutants = requests.get(BASE_URL + GET_ALL_POLLUTANTS)
 json_data_pollutant = json.loads(response_pollutants.text)
 
-hours = 2
+hours = 24
 for grid in json_data_grid: ##Itero por cada grilla
     print('Processing grid from  (%s)...' % (str(grid['lat'])))
 
