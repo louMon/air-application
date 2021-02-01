@@ -48,3 +48,7 @@ def storeSpatialPredictionDB(data_json):
     spatial_predict = InterpolatedPollutants(**data_json)
     session.add(spatial_predict)
     session.commit()
+
+def deleteAllSpatialPredictionInDB():
+    session.query(InterpolatedPollutants).filter(InterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
+    session.commit()

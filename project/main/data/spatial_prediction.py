@@ -31,3 +31,13 @@ def getHistoricalOfSpatialPrediction():
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
+
+@app.route('/api/delete_all_spatial_prediction/', methods=['POST'])
+def deleteAllSpatialPrediction():
+    """ Grid function to delete grid to predict """
+    try:
+        post_data_helper.deleteAllSpatialPredictionInDB()
+        return make_response('Spatial Prediction value has been deleted', 200)
+    except TypeError as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)

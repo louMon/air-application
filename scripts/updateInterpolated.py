@@ -4,11 +4,14 @@ import dateutil.parser
 import dateutil.tz
 import json
 import random
+import time
+
 BASE_URL = 'http://pucp-calidad-aire-api.qairadrones.com/'
 #BASE_URL = 'http://0.0.0.0:5000/'
 GET_ALL_POLLUTANTS = 'api/get_all_pollutants/'
 GET_ALL_GRID = 'api/get_all_grid/'
 STORE_SPATIAL_PREDICTION ='api/store_spatial_prediction/'
+DELETE_ALL_SPATIAL_PREDICTION ='api/delete_all_spatial_prediction/'
 
 response_grid = requests.get(BASE_URL + GET_ALL_GRID)
 json_data_grid = json.loads(response_grid.text)
@@ -16,7 +19,10 @@ json_data_grid = json.loads(response_grid.text)
 response_pollutants = requests.get(BASE_URL + GET_ALL_POLLUTANTS)
 json_data_pollutant = json.loads(response_pollutants.text)
 
-hours = 24
+start_time = time.time()
+hours = 1
+response_delete = requests.post(BASE_URL + DELETE_ALL_SPATIAL_PREDICTION)
+print(response_delete)
 for grid in json_data_grid: ##Itero por cada grilla
     print('Processing grid from  (%s)...' % (str(grid['lat'])))
 
@@ -27,7 +33,6 @@ for grid in json_data_grid: ##Itero por cada grilla
 
             spatial_json={"pollutant_id":pollutant["id"],"grid_id":grid["id"],\
                       "ppb_value":random.randrange(1000),"ug_m3_value":random.randrange(850),"hour_position":i}
-
-            print(spatial_json)
             response = requests.post(BASE_URL + STORE_SPATIAL_PREDICTION, json=spatial_json)
-            print(response.text)
+
+print("--- %s seconds ---" % (time.time() - start_time))
