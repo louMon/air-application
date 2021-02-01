@@ -20,15 +20,12 @@ response_pollutants = requests.get(BASE_URL + GET_ALL_POLLUTANTS)
 json_data_pollutant = json.loads(response_pollutants.text)
 
 start_time = time.time()
-hours = 1
+hours = 24
 response_delete = requests.post(BASE_URL + DELETE_ALL_SPATIAL_PREDICTION)
-print(response_delete)
 for grid in json_data_grid: ##Itero por cada grilla
     print('Processing grid from  (%s)...' % (str(grid['lat'])))
 
     for pollutant in json_data_pollutant: ## Itero por cada contaminante
-        print('Processing pollutant from  %s...' % (pollutant['pollutant_name']))
-
         for i in range(hours): ##Itero las 72 horas hacia atras de dicho contaminante en dicha grilla
 
             spatial_json={"pollutant_id":pollutant["id"],"grid_id":grid["id"],\
