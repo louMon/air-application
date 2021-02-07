@@ -2,8 +2,15 @@ from flask import jsonify, make_response, request
 from datetime import timedelta
 from project import app
 import dateutil.parser
+import numpy as np
 import datetime
 import dateutil
+import requests
+import json
+
+QAIRAMAP_URL = 'https://qairamapnapi.qairadrones.com/'
+GET_HOURLY_VALID_BY_QHAWAX = 'api/air_quality_measurements_period/'
+GET_ALL_MODULES = 'api/AllQhawaxByCompany/?company_array=21,22,23,24,25,26,27,28,&number_companies=8'
 
 @app.route('/api/air_quality_measurements/', methods=['POST'])
 def storeAirQualityData():
@@ -16,19 +23,20 @@ def storeAirQualityData():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-@app.route('/api/air_quality_measurements_period/', methods=['GET'])
-def getAirQualityMeasurementsTimePeriod():
+@app.route('/api/air_quality_measurements_period_all_modules/', methods=['GET'])
+def getAirQualityMeasurementsTimePeriodAllModules():
     """ To list all measurement in ppb of air quality measurement table in a define period of time - This is an hourly average measurement """
+    all_measurements = []
     try:
-        qhawax_name = request.args.get('name')
-        initial_timestamp_utc = datetime.datetime.strptime(request.args.get('initial_timestamp'), '%d-%m-%Y %H:%M:%S')
-        final_timestamp_utc = datetime.datetime.strptime(request.args.get('final_timestamp'), '%d-%m-%Y %H:%M:%S')
-        air_quality_measurements = get_data_helper.queryDBAirQuality(qhawax_name, initial_timestamp_utc, final_timestamp_utc)
-
-        if air_quality_measurements is not None:
-            air_quality_measurements_list = [measurement._asdict() for measurement in air_quality_measurements]
-            return make_response(jsonify(air_quality_measurements_list), 200)
-        return make_response(jsonify('Measurements not found'), 200)
+        initial_timestamp_utc = request.args.get('initial_timestamp')#'%d-%m-%Y %H:%M:%S') UTC 00
+        final_timestamp_utc = request.args.get('final_timestamp')# '%d-%m-%Y %H:%M:%S') UTC 00
+        all_qhawaxs_response = requests.get(QAIRAMAP_URL + GET_ALL_MODULES, params={"company_array": "21,22,23,24,25,26,27,28,","number_companies":"8"})
+        all_qhawaxs = json.loads(all_qhawaxs_response.text)
+        for qhawax in all_qhawaxs:
+            response_measurements = requests.get(QAIRAMAP_URL + GET_HOURLY_VALID_BY_QHAWAX, params={'name': qhawax['name'], 'initial_timestamp':initial_timestamp_utc,'final_timestamp':final_timestamp_utc})
+            measurements = json.loads(response_measurements.text)
+            all_measurements = all_measurements + measurements
+        return make_response(jsonify(all_measurements), 200)
     except TypeError as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
