@@ -6,8 +6,8 @@ import json
 import random
 import time
 
-#BASE_URL = 'http://pucp-calidad-aire-api.qairadrones.com/'
-BASE_URL = 'http://0.0.0.0:5000/'
+BASE_URL = 'http://pucp-calidad-aire-api.qairadrones.com/'
+#BASE_URL = 'http://0.0.0.0:5000/'
 
 GET_ALL_POLLUTANTS = 'api/get_all_pollutants/'
 GET_ALL_GRID = 'api/get_all_grid/'
@@ -26,8 +26,7 @@ json_data_pollutant = json.loads(response_pollutants.text)
 start_time = time.time()
 hours = 24
 response_delete = requests.post(BASE_URL + DELETE_ALL_SPATIAL_PREDICTION)
-timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
-
+#timestamp_utc = datetime.datetime.now() #debe tener este formato 07-02-2021 00:00:00, pero tiene 2021-02-07 23:31:42.317236
 #response_measurements = requests.get(BASE_URL + GET_LAST_HOUR_MEASUREMENT,params={'initial_timestamp':timestamp_utc,'final_timestamp':timestamp_utc})
 #print(response_measurements)
 #measurements_real_points = json.loads(response_measurements.text)
