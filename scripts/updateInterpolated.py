@@ -6,8 +6,8 @@ import json
 import random
 import time
 
-BASE_URL = 'http://pucp-calidad-aire-api.qairadrones.com/'
-#BASE_URL = 'http://0.0.0.0:5000/'
+#BASE_URL = 'http://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL = 'http://0.0.0.0:5000/'
 
 GET_ALL_POLLUTANTS = 'api/get_all_pollutants/'
 GET_ALL_GRID = 'api/get_all_grid/'
@@ -26,12 +26,11 @@ json_data_pollutant = json.loads(response_pollutants.text)
 start_time = time.time()
 hours = 24
 response_delete = requests.post(BASE_URL + DELETE_ALL_SPATIAL_PREDICTION)
-final_timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
-initial_timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
+timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
 
-response_measurements = requests.get(BASE_URL + GET_LAST_HOUR_MEASUREMENT,params={'initial_timestamp':initial_timestamp_utc,'final_timestamp':final_timestamp_utc})
-measurements_real_points = json.loads(response_measurements.text)
-
+#response_measurements = requests.get(BASE_URL + GET_LAST_HOUR_MEASUREMENT,params={'initial_timestamp':timestamp_utc,'final_timestamp':timestamp_utc})
+#print(response_measurements)
+#measurements_real_points = json.loads(response_measurements.text)
 for grid in json_data_grid: ##Itero por cada grilla
     print('Processing grid from  (%s)...' % (str(grid['lat'])))
 
