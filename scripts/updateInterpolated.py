@@ -29,18 +29,18 @@ response_delete = requests.post(BASE_URL + DELETE_ALL_SPATIAL_PREDICTION)
 final_timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
 initial_timestamp_utc = datetime.datetime.now(dateutil.tz.tzutc())
 
+response_measurements = requests.get(BASE_URL + GET_LAST_HOUR_MEASUREMENT,params={'initial_timestamp':initial_timestamp_utc,'final_timestamp':final_timestamp_utc})
+measurements_real_points = json.loads(response_measurements.text)
+
 for grid in json_data_grid: ##Itero por cada grilla
     print('Processing grid from  (%s)...' % (str(grid['lat'])))
 
     for pollutant in json_data_pollutant: ## Itero por cada contaminante
         for i in range(hours): ##Itero las 24 horas hacia atras de dicho contaminante en dicha grilla
-        	response_measurements = requests.get(BASE_URL + GET_LAST_HOUR_MEASUREMENT,params={'initial_timestamp':initial_timestamp_utc,'final_timestamp':final_timestamp_utc})
-        	#measurements_real_points = json.loads(response_measurements.text)
         	#puntuaciones = repetir_evaluacion_interpolacion_conjuntos_de_datos(measurements_real_points, 
             #                                pollutant["pollutant_name"], grid["lat"], grid["lon"],NOMBRE_MODELO)
 			#listas_valores_variable_interpolacion_reales = [puntuacion[1] for puntuacion in puntuaciones]
 			#listas_valores_variable_interpolacion_interpolados = [puntuacion[2] for puntuacion in puntuaciones]
-			
             spatial_json={"pollutant_id":pollutant["id"],"grid_id":grid["id"],\
                       "ppb_value":None,"ug_m3_value":random.randrange(850),"hour_position":i}
             response = requests.post(BASE_URL + STORE_SPATIAL_PREDICTION, json=spatial_json)
