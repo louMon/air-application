@@ -12,11 +12,11 @@ CORS(app)
 # Extensions
 db = SQLAlchemy(app)
 
-from project.main.business import environmental_station,user, grid_to_predict, pollutant
+from project.main.business import environmental_station,user, grid_to_predict, pollutant,prediction_configure
 from project.main.data import air_quality, gas_inca, air_five_minutes_quality,traffic, wind, senahmi, spatial_prediction
 import project.database.models as models
 from project.database.models import User, AirQualityMeasurement, GasInca,FiveMinutesMeasurement,\
 									EnvironmentalStation, Wind, Traffic, Senamhi, InterpolatedPollutants, \
-									GridToPredict, LastPredict, Pollutant
+									GridToPredict, LastPredict, Pollutant, PredictionConfigure
 
 db.create_all()

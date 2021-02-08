@@ -133,6 +133,26 @@ class InterpolatedPollutants(db.Model):
     ug_m3_value = db.Column(db.Float)
     hour_position= db.Column(db.Integer)
 
+class TemporalPollutants(db.Model):
+    __tablename__ = 'temporal_pollutants'
+
+    # Column's definition
+    id = db.Column(db.Integer, primary_key=True)
+    pollutant_id = db.Column(db.Integer,db.ForeignKey('pollutant.id'))
+    environmental_station_id = db.Column(db.Integer,db.ForeignKey('environmental_station.id'))
+    ppb_value = db.Column(db.Float)
+    ug_m3_value = db.Column(db.Float)
+    hour_position= db.Column(db.Integer)
+
+class PredictionConfigure(db.Model):
+    __tablename__ = 'prediction_configure'
+
+    # Column's definition
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(300), nullable=False)
+    last_running_timestamp = db.Column(db.DateTime, nullable=False)
+    table_name = db.Column(db.String(300), nullable=False)
+
 class Wind(db.Model):
     __tablename__ = 'wind'
 

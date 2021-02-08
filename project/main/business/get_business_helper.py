@@ -1,4 +1,4 @@
-from project.database.models import EnvironmentalStation, User, Pollutant, GridToPredict
+from project.database.models import EnvironmentalStation, User, Pollutant, GridToPredict, PredictionConfigure
 from project import app, db
 
 session = db.session
@@ -29,3 +29,15 @@ def TileDoesNotExist(json):
     if(grid_id):
         return False
     return True
+
+def queryGetSpatialConfigure(model_type):
+    """ Helper Eca Noise function to list all zones - No parameters required """
+    id_value = 1 if(model_type=='Spatial') else 2
+    last_running = session.query(PredictionConfigure.last_running_timestamp).filter_by(id=id_value).all()[0][0]
+    return beautyFormatDate(last_running)
+
+def beautyFormatDate(date):
+    return addZero(date.day)+"-"+addZero(date.month)+"-"+addZero(date.year)+" "+addZero(date.hour)+":"+addZero(date.minute)+":"+addZero(date.second)
+
+def addZero(number):
+    return "0"+str(number) if (number<10) else str(number)
