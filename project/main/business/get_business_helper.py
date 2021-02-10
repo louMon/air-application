@@ -37,7 +37,7 @@ def queryGetSpatialConfigure(model_type):
     return beautyFormatDate(last_running)
 
 def beautyFormatDate(date):
-    return addZero(date.day)+"-"+addZero(date.month)+"-"+addZero(date.year)+" "+addZero(date.hour)+":"+addZero(date.minute)+":"+addZero(date.second)
+    return addZero(date.month)+"-"+addZero(date.day)+"-"+addZero(date.year)+" "+addZero(date.hour)+":"+addZero(date.minute)+":"+addZero(date.second)
 
 def addZero(number):
     return "0"+str(number) if (number<10) else str(number)
