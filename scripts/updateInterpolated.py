@@ -27,7 +27,7 @@ hours=[]
 #measurements_real_points = json.loads(response_measurements.text)
 
 def iterateGridsByPollutantsByHours(param):
-    print('Processing grid from ' +(str(param[0]['lat']))+' , '+(str(param[0]['lon'])))
+    #print('Processing grid from ' +(str(param[0]['lat']))+' , '+(str(param[0]['lon'])))
     spatial_json={"pollutant_id":param[1]["id"],"grid_id":param[0]["id"],"ppb_value":None,\
                   "ug_m3_value":random.randrange(850),"hour_position":param[2]}
     response = requests.post(BASE_URL + STORE_SPATIAL_PREDICTION, json=spatial_json)
