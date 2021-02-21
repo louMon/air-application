@@ -10,7 +10,7 @@ import json
 
 QAIRAMAP_URL = 'https://qairamapnapi.qairadrones.com/'
 GET_HOURLY_VALID_BY_QHAWAX = 'api/air_quality_measurements_period/'
-GET_ALL_MODULES = 'api/AllQhawaxByCompany/?company_array=21,22,23,24,25,26,27,28,&number_companies=8'
+GET_ALL_MODULES = 'api/AllQhawaxByCompany/?company_array=37,38,39,40,41,43,&number_companies=8'
 
 @app.route('/api/air_quality_measurements/', methods=['POST'])
 def storeAirQualityData():

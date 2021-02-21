@@ -1,5 +1,4 @@
 import concurrent.futures
-from concurrent.futures import ThreadPoolExecutor
 import itertools
 import requests
 import datetime
@@ -37,8 +36,8 @@ if __name__ == '__main__':
 
     paramlist = list(itertools.product(json_data_grid,json_data_pollutant,hours))
 
-    executor= ThreadPoolExecutor(max_workers=10)
-    executor.submit(iterateGridsByPollutantsByHours,paramlist)
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        executor.map(iterateGridsByPollutantsByHours,paramlist)
 
     response = requests.post(BASE_URL + UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
     print("--- %s seconds ---" % (time.time() - start_time))
