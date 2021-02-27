@@ -11,7 +11,7 @@ import math
 
 BASE_URL = 'https://qairamapnapi.qairadrones.com/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL + 'api/air_quality_measurements_period/'
-LAST_HOURS =5
+LAST_HOURS =24
 QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
                    [-12.0466667,-77.08027778],[-12.044182,-77.050756],[-12.0450749,-77.0278449],
@@ -36,10 +36,12 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
     final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
+
     for i in range(len(QHAWAX_ARRAY)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
         array_json_measurement_by_module = json.loads(response.text)
+
         if(LAST_HOURS != len(array_json_measurement_by_module)):
             setOneMoreNoneAllPollutants(array_json_count_pollutants[i], LAST_HOURS - len(array_json_measurement_by_module))
         for j in range(len(array_json_measurement_by_module)): #iterando cada medicion por hora del modulo N [{},{},{}]
@@ -48,6 +50,7 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
                 if value is not None:
                     new_json[key] = value
                 else:
+                    new_json[key] = 0
                     array_json_count_pollutants[i][key] +=1
             new_json['lat'] =  QHAWAX_LOCATION[i][0]
             new_json['lon'] =  QHAWAX_LOCATION[i][1]
@@ -111,10 +114,18 @@ def obtener_interpolacion_idw(x, y, z, xi, yi):
     return zi
 
 def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
-    #print(conjunto_de_datos_interpolacion_espacial)
-    #print("====================================================================================================================")
+    print("====================================================INICIO================================================================")
+    print(conjunto_de_datos_interpolacion_espacial)
+    print(type(conjunto_de_datos_interpolacion_espacial[0]))
+    print(len(conjunto_de_datos_interpolacion_espacial))
+    print("INDICE DE COLUMNAAAAAAAA X")
+    print(indice_columna_coordenadas_x)
+    #SIEMPRE ES LO MISMO ESTO - AQUI ERROR?
     coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
+    print(coordenadas_x_conjunto_de_datos_interpolacion_espacial)
     coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
+    print(coordenadas_y_conjunto_de_datos_interpolacion_espacial)
+    print("====================================================FIN================================================================")
     valores_predichos = []
     for indice_columna_interpolacion in DICCIONARIO_INDICES_VARIABLES_PREDICCION.values():
         valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_interpolacion]

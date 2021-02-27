@@ -36,7 +36,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = 10
+pool_size = 15
 
 def setArrayCountNonePollutants():
     array_none_pollutants = []
@@ -69,6 +69,7 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
                 if value is not None:
                     new_json[key] = value
                 else:
+                    new_json[key] = 0
                     array_json_count_pollutants[i][key] +=1
             new_json['lat'] =  QHAWAX_LOCATION[i][0]
             new_json['lon'] =  QHAWAX_LOCATION[i][1]
