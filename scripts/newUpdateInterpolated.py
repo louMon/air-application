@@ -19,7 +19,7 @@ DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction
 GET_LAST_HOUR_MEASUREMENT =BASE_URL_IA + 'api/air_quality_measurements_period_all_modules/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
-LAST_HOURS =10
+LAST_HOURS =12
 QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
                    [-12.0466667,-77.08027778],[-12.044182,-77.050756],[-12.0450749,-77.0278449],
@@ -36,7 +36,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = 15
+pool_size = 12
 
 def setArrayCountNonePollutants():
     array_none_pollutants = []
@@ -208,20 +208,23 @@ if __name__ == '__main__':
 
     #Inicializar contadores None en cero de cada contaminante por qHAWAX
     array_json_count_pollutants = setArrayCountNonePollutants()
-
+    print("Inicializar contadores None en cero de cada contaminante por qHAWAX")
     #Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX
     measurement_list, array_json_count_pollutants = getListOfMeasurementOfAllModules(array_json_count_pollutants)
-
+    print("Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX")
     #Validar si es que en un contaminante hay mas de la mitad de Nones para descartarlo.
     measurement_list = validateNumberOfNonePollutants(measurement_list, array_json_count_pollutants)
+    print("Validar si es que en un contaminante hay mas de la mitad de Nones para descartarlo.")
 
     if(len(DICCIONARIO_INDICES_VARIABLES_PREDICCION)>1):
         #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
-        sort_list_without_json = sortListOfMeasurementPerHour(measurement_list) 
+        sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
+        print("Arreglo de jsons ordenados por hora del mas antiguo al mas actual")
         #Interpolando
         lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
         indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
         indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
+        print("Interpolando")
 
         pool = multiprocessing.Pool(pool_size)
         pool_results = pool.map(iterateByGrids, json_data_grid)
