@@ -5,7 +5,7 @@ from project import app
 
 @app.route('/api/store_spatial_prediction/', methods=['POST'])
 def storeSpatialPrediction():
-    """ Spatial Prediction function to record prediction """
+    """ Recent Spatial Prediction function to record prediction """
     try:
         data_json = request.get_json()
         post_data_helper.storeSpatialPredictionDB(data_json)
@@ -14,7 +14,6 @@ def storeSpatialPrediction():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-
 @app.route('/api/get_historical_of_spatial/', methods=['GET'])
 def getHistoricalOfSpatialPrediction():
     """ Get station - Input Id of station """
@@ -22,6 +21,7 @@ def getHistoricalOfSpatialPrediction():
     last_hours = int(request.args.get('last_hours'))
     pollutant_unit = str(request.args.get('pollutant_unit'))
     try:
+        #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
         predicted_measurements = get_data_helper.queryLastPredictedMeasurement(pollutant_name,last_hours,pollutant_unit)
         if(predicted_measurements!=None):
 	        predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
@@ -32,12 +32,35 @@ def getHistoricalOfSpatialPrediction():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
+@app.route('/api/store_last_spatial_prediction/', methods=['POST'])
+def storeLastSpatialPrediction():
+    """ Last Spatial Prediction function to record prediction """
+    try:
+        recent_interpolated_array = get_data_helper.queryAllRecentInterpolatedPollutantst()
+        for i in range(len(recent_interpolated_array)):
+            post_data_helper.storeLastSpatialPredictionDB(recent_interpolated_array[i])
+        return make_response('OK', 200)
+    except TypeError as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
 @app.route('/api/delete_all_spatial_prediction/', methods=['POST'])
 def deleteAllSpatialPrediction():
     """ Grid function to delete grid to predict """
     try:
         post_data_helper.deleteAllSpatialPredictionInDB()
-        return make_response('Spatial Prediction value has been deleted', 200)
+        return make_response('Recent Spatial Prediction value has been deleted', 200)
+    except TypeError as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
+
+@app.route('/api/delete_all_last_spatial_prediction/', methods=['POST'])
+def deleteAllLastSpatialPrediction():
+    """ Grid function to delete grid to predict """
+    try:
+        post_data_helper.deleteAllLastSpatialPredictionInDB()
+        return make_response('Last Spatial Prediction value has been deleted', 200)
     except TypeError as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)

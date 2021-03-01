@@ -133,6 +133,17 @@ class InterpolatedPollutants(db.Model):
     ug_m3_value = db.Column(db.Float)
     hour_position= db.Column(db.Integer)
 
+class PastInterpolatedPollutants(db.Model):
+    __tablename__ = 'past_interpolated_pollutants'
+
+    # Column's definition
+    id = db.Column(db.Integer, primary_key=True)
+    pollutant_id = db.Column(db.Integer,db.ForeignKey('pollutant.id'))
+    grid_id = db.Column(db.Integer,db.ForeignKey('grid_to_predict.id'))
+    ppb_value = db.Column(db.Float)
+    ug_m3_value = db.Column(db.Float)
+    hour_position= db.Column(db.Integer)
+
 class TemporalPollutants(db.Model):
     __tablename__ = 'temporal_pollutants'
 

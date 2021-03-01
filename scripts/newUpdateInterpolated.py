@@ -19,7 +19,7 @@ DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction
 GET_LAST_HOUR_MEASUREMENT =BASE_URL_IA + 'api/air_quality_measurements_period_all_modules/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
-LAST_HOURS =12
+LAST_HOURS =24
 QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
                    [-12.0466667,-77.08027778],[-12.044182,-77.050756],[-12.0450749,-77.0278449],
@@ -36,7 +36,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = 12
+pool_size = 24
 
 def setArrayCountNonePollutants():
     array_none_pollutants = []
