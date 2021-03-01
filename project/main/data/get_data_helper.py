@@ -48,10 +48,10 @@ def queryNotRecentPredictedMeasurement(pollutant_name,last_hours,pollutant_unit)
 def queryAllRecentInterpolatedPollutantst():
     """ Get All qHAWAXs in field - No parameters required """
     columns = (InterpolatedPollutants.hour_position,InterpolatedPollutants.ug_m3_value, 
-    		   InterpolatedPollutants.ppb_value, InterpolatedPollutants.pollutant_id. InterpolatedPollutants.grid_id)
+               InterpolatedPollutants.ppb_value, InterpolatedPollutants.pollutant_id. InterpolatedPollutants.grid_id)
 
-	recent_predicted_measurements = session.query(*columns).order_by(InterpolatedPollutants.hour_position.asc()).all()
-	return [measurement._asdict() for measurement in recent_predicted_measurements]
+    recent_predicted_measurements = session.query(*columns).order_by(InterpolatedPollutants.hour_position.asc()).all()
+    return [measurement._asdict() for measurement in recent_predicted_measurements]
 
 def mergeSameHourPosition(records):
 	id2record = defaultdict(partial(defaultdict, list))

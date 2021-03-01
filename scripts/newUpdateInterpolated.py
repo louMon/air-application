@@ -201,6 +201,7 @@ def iterateByGrids(grid_elem):
 
 
 if __name__ == '__main__':
+    print(datetime.datetime.now(dateutil.tz.tzutc()))
     start_time = time.time()
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_POLLUTANTS).text) 
@@ -234,3 +235,6 @@ if __name__ == '__main__':
 
         response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
         print("--- %s seconds ---" % (time.time() - start_time))
+
+    print(datetime.datetime.now(dateutil.tz.tzutc()))
+
