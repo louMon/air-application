@@ -8,6 +8,8 @@ import random
 import time
 import multiprocessing
 import numpy as np
+import pandas as pd
+import math
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
@@ -28,6 +30,7 @@ QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-
                    [-12.045394,-77.036852],[-12.057582,-77.071778]]
 array_columns = ["CO","H2S","NO2","O3","PM10","PM25","SO2","lat","lon"]
 DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6}
+DICCIONARIO_INDICES_VARIABLES_PREDICCION_ALL = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6,'timestamp_zone':7,'lat':8,'lon':9,'alt':10}
 NOMBRE_COLUMNA_COORDENADAS_X = 'lon'
 NOMBRE_COLUMNA_COORDENADAS_Y = 'lat'
 INDICE_PM1 = 4
@@ -38,21 +41,36 @@ indice_columna_coordenadas_y = None
 json_data_pollutant = None
 pool_size = 24
 
-def setArrayCountNonePollutants():
-    array_none_pollutants = []
-    for i in range(len(QHAWAX_ARRAY)):
-        json_pollutants = {}
-        for key,value in DICCIONARIO_INDICES_VARIABLES_PREDICCION.items():
-            json_pollutants[key]=0
-        array_none_pollutants.append(json_pollutants)
-    return array_none_pollutants
+def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
+    for key,value in DICCIONARIO_INDICES_VARIABLES_PREDICCION_ALL.items(): 
+        if(sensor_name==key):
+            pollutant_array_json[key]=sensor_values
+            continue
+    return pollutant_array_json
 
-def setOneMoreNoneAllPollutants(measurement, number_none): #Ir acumulando los Nones en el json
-    for key,value in measurement.items():
-        measurement[key]+= number_none
-    return measurement
+def completeHourlyValuesByQhawax(valid_processed_measurements,LAST_HOURS,qhawax_location_specific):
+    average_valid_processed_measurement = []
+    pollutant_array_json = {'CO': [], 'H2S': [], 'NO2': [], 'O3': [], 'PM10': [], 'PM25': [], 'SO2': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
+    for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante
+        sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
+        if(None in sensor_values):
+            df_sensor =pd.DataFrame(sensor_values)
+            df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
+            sensor_values = df_sensor[0].tolist() 
+        pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
+    for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
+        json = {}
+        for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para armar el json
+            json[key] = pollutant_array_json[key][elem_hour]
+            if(key=='lat'):
+                json[key] =  qhawax_location_specific[0]
+            if(key=='lon'):
+                json[key] =  qhawax_location_specific[1]
+        average_valid_processed_measurement.append(json)
 
-def getListOfMeasurementOfAllModules(array_json_count_pollutants):
+    return average_valid_processed_measurement
+
+def getListOfMeasurementOfAllModules():
     list_of_hours = []
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
@@ -60,44 +78,12 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
     for i in range(len(QHAWAX_ARRAY)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
-        array_json_measurement_by_module = json.loads(response.text)
-        if(LAST_HOURS != len(array_json_measurement_by_module)):
-            setOneMoreNoneAllPollutants(array_json_count_pollutants[i], LAST_HOURS - len(array_json_measurement_by_module))
-        for j in range(len(array_json_measurement_by_module)): #iterando cada medicion por hora del modulo N [{},{},{}]
-            new_json = {}
-            for key,value in array_json_measurement_by_module[j].items():  # Here you will get key and value.
-                if value is not None:
-                    new_json[key] = value
-                else:
-                    new_json[key] = 0#Reemplazarlo con el promedio de periodos anteriores de ese contaminante(interpolacion lineal)
-                    array_json_count_pollutants[i][key] +=1
-            new_json['lat'] =  QHAWAX_LOCATION[i][0]
-            new_json['lon'] =  QHAWAX_LOCATION[i][1]
-            array_json_measurement_by_module[j]=new_json
-        list_of_hours.append(array_json_measurement_by_module)
-    return list_of_hours,array_json_count_pollutants
-
-def validateNumberOfNonePollutants(measurement_list, array_json_count_pollutants):
-    pollutant = {'CO': 0, 'H2S': 0, 'NO2': 0, 'O3': 0, 'PM10': 0, 'PM25': 0, 'SO2': 0}
-    total_of_measurement = LAST_HOURS * len(QHAWAX_ARRAY)
-    #Count none pollutants
-    for i in range(len(array_json_count_pollutants)):
-        for key,value in array_json_count_pollutants[i].items():
-            if(value>0): 
-                pollutant[key]+=value
-    #Quita el pollutant que no cumpla con la condicion (lo quito de array_columns, DICCIONARIO_INDICES_VARIABLES_PREDICCION)
-    for key,value in pollutant.items():
-        if(value>(total_of_measurement/2 +1)): 
-            print("Retirar del json de qhawax: " +str(value))
-            for k in range(len(measurement_list)):
-                for j in range(len(measurement_list[k])):
-                    measurement_list[k][j].pop(key, None)
-            print("Retirar del array_columns: " +str(value))
-            array_columns.remove(key)
-            print("Retirar del DICCIONARIO_INDICES_VARIABLES_PREDICCION: " +str(value))
-            DICCIONARIO_INDICES_VARIABLES_PREDICCION.pop(key, None)
-
-    return measurement_list
+        hourly_processed_measurements = response.json()
+        if len(hourly_processed_measurements) < LAST_HOURS/4: #La cantidad de horas es menor a la cuarta parte entonces no deberia pasar ese qhawax
+            continue
+        hourly_processed_measurements = completeHourlyValuesByQhawax(hourly_processed_measurements,LAST_HOURS,QHAWAX_LOCATION[i])
+        list_of_hours.append(hourly_processed_measurements)
+    return list_of_hours
 
 def convertJsonToList(json_measurement):
     list_of_measurements = []
@@ -110,16 +96,24 @@ def sortListOfMeasurementPerHour(measurement_list):
     sort_list_by_hour = []
     for i in range(LAST_HOURS):
         hour_n = []
-        for j in range(len(QHAWAX_ARRAY)):
-            #print("Longitud de los elementos por arreglo de qhawax: "+str(len(measurement_list[j])))
+        for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
             if(LAST_HOURS == len(measurement_list[j])): #Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado
                 list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[j][i])
                 list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
                 hour_n.append(list_measurement_by_qhawax_by_hour)
-        hour_n = np.array(hour_n)
-        sort_list_by_hour.append(hour_n)
+        new_hour_n_array = []
+        for hour_elem in range(len(hour_n)):
+            flag=False
+            for measurement_elem in range(len(hour_n[hour_elem])):
+                if(math.isnan(hour_n[hour_elem][measurement_elem])):
+                    flag=True
+                    continue
+            if(flag==False):
+                new_hour_n = hour_n[hour_elem]
+                new_hour_n_array.append(new_hour_n)
+        new_hour_n_array = np.array(new_hour_n_array)
+        sort_list_by_hour.append(new_hour_n_array)
     return sort_list_by_hour
-
 
 def obtener_lista_diccionario_columnas_indice(lista_conjuntos_de_datos_interpolacion_espacial):
     lista_diccionario_columnas_indice = []
@@ -201,40 +195,33 @@ def iterateByGrids(grid_elem):
 
 
 if __name__ == '__main__':
-    print(datetime.datetime.now(dateutil.tz.tzutc()))
     start_time = time.time()
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_POLLUTANTS).text) 
     response_delete = requests.post(DELETE_ALL_SPATIAL_PREDICTION)
 
-    #Inicializar contadores None en cero de cada contaminante por qHAWAX
-    array_json_count_pollutants = setArrayCountNonePollutants()
-    print("Inicializar contadores None en cero de cada contaminante por qHAWAX")
     #Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX
-    measurement_list, array_json_count_pollutants = getListOfMeasurementOfAllModules(array_json_count_pollutants)
-    print("Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX")
-    #Validar si es que en un contaminante hay mas de la mitad de Nones para descartarlo.
-    measurement_list = validateNumberOfNonePollutants(measurement_list, array_json_count_pollutants)
-    print("Validar si es que en un contaminante hay mas de la mitad de Nones para descartarlo.")
+    measurement_list = getListOfMeasurementOfAllModules()
+    print("Obtener data de la base de datos de qHAWAXs y completar los None si cumplen con las condiciones")
+    
+    #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
+    sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
+    print("Arreglo de jsons ordenados por hora del mas antiguo al mas actual")
+    #Interpolando
+    lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
+    indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
+    indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
+    print("Interpolando")
 
-    if(len(DICCIONARIO_INDICES_VARIABLES_PREDICCION)>1):
-        #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
-        sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
-        print("Arreglo de jsons ordenados por hora del mas antiguo al mas actual")
-        #Interpolando
-        lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
-        indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
-        indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
-        print("Interpolando")
+    pool = multiprocessing.Pool(pool_size)
+    pool_results = pool.map(iterateByGrids, json_data_grid)
 
-        pool = multiprocessing.Pool(pool_size)
-        pool_results = pool.map(iterateByGrids, json_data_grid)
+    pool.close()
+    pool.join()
 
-        pool.close()
-        pool.join()
-
-        response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
-        print("--- %s seconds ---" % (time.time() - start_time))
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
+    print("--- %s seconds ---" % (time.time() - start_time))
 
     print(datetime.datetime.now(dateutil.tz.tzutc()))
+    print("===================================================================================")
 

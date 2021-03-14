@@ -45,7 +45,7 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,LAST_HOURS,qhawax_
             df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
             sensor_values = df_sensor[0].tolist() 
         pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
-    for elem_hour in range(LAST_HOURS): #Recorro por la cantidad de horas
+    for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
         json = {}
         for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para armar el json
             json[key] = pollutant_array_json[key][elem_hour]
@@ -62,12 +62,11 @@ def getListOfMeasurementOfAllModules():
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
     final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
-
     for i in range(len(QHAWAX_ARRAY)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
         hourly_processed_measurements = response.json()
-        if len(hourly_processed_measurements) == 0: #print('qH0'+str(QHAWAX_ARRAY[i])+' no tiene ningun elemento en ese periodo de tiempo')
+        if len(hourly_processed_measurements) < LAST_HOURS/4: #La cantidad de horas es menor a la cuarta parte entonces no deberia pasar ese qhawax
             continue
         hourly_processed_measurements = completeHourlyValuesByQhawax(hourly_processed_measurements,LAST_HOURS,QHAWAX_LOCATION[i])
         list_of_hours.append(hourly_processed_measurements)
@@ -89,22 +88,18 @@ def sortListOfMeasurementPerHour(measurement_list):
                 list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[j][i])
                 list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
                 hour_n.append(list_measurement_by_qhawax_by_hour)
+        new_hour_n_array = []
         for hour_elem in range(len(hour_n)):
             flag=False
-            new_hour_n = []
             for measurement_elem in range(len(hour_n[hour_elem])):
                 if(math.isnan(hour_n[hour_elem][measurement_elem])):
-                    print("Entre porque soy nan")
-                    print(hour_n[hour_elem][measurement_elem])
                     flag=True
                     continue
-            #print(hour_n[hour_elem])
             if(flag==False):
-                print("Entro porque no hay Nan")
                 new_hour_n = hour_n[hour_elem]
-                new_hour_n = np.array(new_hour_n)
-                print(new_hour_n)
-                sort_list_by_hour.append(new_hour_n)
+                new_hour_n_array.append(new_hour_n)
+        new_hour_n_array = np.array(new_hour_n_array)
+        sort_list_by_hour.append(new_hour_n_array)
     return sort_list_by_hour
 
 def obtener_lista_diccionario_columnas_indice(lista_conjuntos_de_datos_interpolacion_espacial):
@@ -163,23 +158,22 @@ def obtenerListaInterpolacionesPasadasEnUnPunto(lista_conjunto_de_datos_interpol
 #Obtener data de la base de datos de qHAWAXs
 measurement_list = getListOfMeasurementOfAllModules()
 
-if(len(DICCIONARIO_INDICES_VARIABLES_PREDICCION)>1):
-    #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
-    sort_list_without_json = sortListOfMeasurementPerHour(measurement_list) 
+#Arreglo de jsons ordenados por hora del mas antiguo al mas actual
+sort_list_without_json = sortListOfMeasurementPerHour(measurement_list) 
 
-    #Interpolando
-    lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
-    indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
-    indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
-    conjunto_valores_predichos = obtenerListaInterpolacionesPasadasEnUnPunto(sort_list_without_json, \
-                                                                             indice_columna_coordenadas_x, \
-                                                                             indice_columna_coordenadas_y, \
-                                                                             coordenada_x_prediccion, \
-                                                                             coordenada_y_prediccion)
+#Interpolando
+lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
+indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
+indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
+conjunto_valores_predichos = obtenerListaInterpolacionesPasadasEnUnPunto(sort_list_without_json, \
+                                                                         indice_columna_coordenadas_x, \
+                                                                         indice_columna_coordenadas_y, \
+                                                                         coordenada_x_prediccion, \
+                                                                         coordenada_y_prediccion)
 
-    conjunto_valores_predichos=np.asarray(conjunto_valores_predichos).astype(np.float32)
-    for i in range(len(conjunto_valores_predichos)):
-        print("Elemento: "+str(i)+" -----------------------")
-        print(conjunto_valores_predichos[i])
+conjunto_valores_predichos=np.asarray(conjunto_valores_predichos).astype(np.float32)
+for i in range(len(conjunto_valores_predichos)):
+    print("Elemento: "+str(i)+" -----------------------")
+    print(conjunto_valores_predichos[i])
 
 
