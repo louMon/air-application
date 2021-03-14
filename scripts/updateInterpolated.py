@@ -50,6 +50,44 @@ def setArrayCountNonePollutants():
         array_none_pollutants.append(json_pollutants)
     return array_none_pollutants
 
+def completeHourlyValues(valid_processed_measurements):
+    SKIP_KEYS = ['timestamp','timestamp_zone']
+    LOCATION = ['lat','lon']
+    METEREOLOGIC = ['humidity','pressure','temperature','SPL','UV','I_temperature']
+    POLLUTANT = ['CO','CO_ug_m3','H2S','H2S_ug_m3','NO2','NO2_ug_m3','O3','O3_ug_m3','PM1','PM10','PM25','SO2','SO2_ug_m3',]
+    average_valid_processed_measurement = {}
+    for sensor_name in valid_processed_measurements[0]:
+        if sensor_name in SKIP_KEYS:
+            continue
+        sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
+        print(sensor_values)
+        if all([value is None for value in sensor_values]):
+            average_valid_processed_measurement[sensor_name] = None 
+        else:
+            average_valid_processed_measurement[sensor_name] = None #Inicializo como None
+            if(sensor_name in POLLUTANT): # Valido que minimo el 75% de registros (pollutant) sean positivos en una hora
+                sensor_values_without_none_and_positives = [value for value in sensor_values if ((value is not None) and (value>=0))]
+                
+                if(len(sensor_values_without_none_and_positives)>=0.75*180): #Si hay minimo 75% de 180 (total de registros en una hora)
+                    averaged_value = sum(sensor_values_without_none_and_positives)/len(sensor_values_without_none_and_positives)
+                    average_valid_processed_measurement[sensor_name] =  round(averaged_value, 3)
+            else:# Valido que los registros no sean None en ese sensor meterologico o location
+                sensor_values_without_none_and_positives = [value for value in sensor_values if ((value is not None) and (math.isnan(value)== False))]
+                if(len(sensor_values_without_none_and_positives)>0): 
+                    if sensor_name not in ['SPL']:
+                        averaged_value = sum(sensor_values_without_none_and_positives)/len(sensor_values_without_none_and_positives)
+                        average_valid_processed_measurement[sensor_name] = averaged_value
+                        if sensor_name not in ['lat','lon']:
+                            average_valid_processed_measurement[sensor_name] = round(averaged_value, 3)
+                    elif sensor_name in ['SPL']:
+                        #Para el caso del spl se tiene que obtener promedio logaritmico, no aritmetico
+                        average_spl = calculateSPLLogarithmAverage(sensor_values_without_none_and_positives)
+                        if(average_spl is not None):
+                            average_valid_processed_measurement[sensor_name]= round(average_spl,3)
+    starting_hour = datetime.datetime.now(dateutil.tz.tzutc())
+    average_valid_processed_measurement['timestamp_zone'] = str(starting_hour.replace(minute=0, second=0, microsecond=0))
+    return average_valid_processed_measurement
+
 def getListOfMeasurementOfAllModules(array_json_count_pollutants):
     list_of_hours = []
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
@@ -58,7 +96,10 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
     for i in range(len(QHAWAX_ARRAY)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
-        array_json_measurement_by_module = json.loads(response.text)
+        #array_json_measurement_by_module = json.loads(response.text)
+        array_json_measurement_by_module = response.json()
+        completeHourlyValues(hourly_processed_measurements)
+
         if(LAST_HOURS != len(array_json_measurement_by_module)):
             setOneMoreNoneAllPollutants(array_json_count_pollutants[i], LAST_HOURS - len(array_json_measurement_by_module))
         for j in range(len(array_json_measurement_by_module)): #iterando cada medicion por hora del modulo N [{},{},{}]

@@ -69,7 +69,7 @@ def getListOfMeasurementOfAllModules(array_json_count_pollutants):
                 if value is not None:
                     new_json[key] = value
                 else:
-                    new_json[key] = 0
+                    new_json[key] = 0#Reemplazarlo con el promedio de periodos anteriores de ese contaminante(interpolacion lineal)
                     array_json_count_pollutants[i][key] +=1
             new_json['lat'] =  QHAWAX_LOCATION[i][0]
             new_json['lon'] =  QHAWAX_LOCATION[i][1]
