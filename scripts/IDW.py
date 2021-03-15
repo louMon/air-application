@@ -15,13 +15,13 @@ GET_HOURLY_DATA_PER_QHAWAX = BASE_URL + 'api/air_quality_measurements_period/'
 LAST_HOURS =24
 QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
-                   [-12.0466667,-77.08027778],[-12.044182,-77.050756],[-12.0450749,-77.0278449],
+                   [-12.044226,-77.050832],[-12.0466667,-77.080277778],[-12.0450749,-77.0278449],
                    [-12.047538,-77.035366],[-12.054722,-77.029722],[-12.044236,-77.012467],
                    [-12.051526,-77.077941],[-12.042525,-77.033486],[-12.046736,-77.047594],
                    [-12.045394,-77.036852],[-12.057582,-77.071778]]
 array_columns = ["CO","H2S","NO2","O3","PM10","PM25","SO2","lat","lon"]
 DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6}
-DICCIONARIO_INDICES_VARIABLES_PREDICCION_ALL = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6,'timestamp_zone':7,'lat':8,'lon':9,'alt':10}
+ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6,'timestamp_zone':7,'lat':8,'lon':9,'alt':10}
 NOMBRE_COLUMNA_COORDENADAS_X = 'lon'
 NOMBRE_COLUMNA_COORDENADAS_Y = 'lat'
 coordenada_x_prediccion = -12.013600
@@ -29,16 +29,16 @@ coordenada_y_prediccion = -77.03367
 INDICE_PM1 = 4
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
-    for key,value in DICCIONARIO_INDICES_VARIABLES_PREDICCION_ALL.items(): 
+    for key,value in ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION.items(): 
         if(sensor_name==key):
             pollutant_array_json[key]=sensor_values
             continue
     return pollutant_array_json
 
-def completeHourlyValuesByQhawax(valid_processed_measurements,LAST_HOURS,qhawax_location_specific):
+def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_specific):
     average_valid_processed_measurement = []
     pollutant_array_json = {'CO': [], 'H2S': [], 'NO2': [], 'O3': [], 'PM10': [], 'PM25': [], 'SO2': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
-    for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante
+    for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
         sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
         if(None in sensor_values):
             df_sensor =pd.DataFrame(sensor_values)
@@ -47,8 +47,9 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,LAST_HOURS,qhawax_
         pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
     for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
         json = {}
-        for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para armar el json
+        for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para rearmar el json
             json[key] = pollutant_array_json[key][elem_hour]
+            #Estas lineas son para actualizar las posiciones de los qhawaxs con su real ubicacion
             if(key=='lat'):
                 json[key] =  qhawax_location_specific[0]
             if(key=='lon'):
@@ -66,9 +67,9 @@ def getListOfMeasurementOfAllModules():
         json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
         hourly_processed_measurements = response.json()
-        if len(hourly_processed_measurements) < LAST_HOURS/4: #La cantidad de horas es menor a la cuarta parte entonces no deberia pasar ese qhawax
+        if len(hourly_processed_measurements) < LAST_HOURS/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
             continue
-        hourly_processed_measurements = completeHourlyValuesByQhawax(hourly_processed_measurements,LAST_HOURS,QHAWAX_LOCATION[i])
+        hourly_processed_measurements = completeHourlyValuesByQhawax(hourly_processed_measurements,QHAWAX_LOCATION[i])
         list_of_hours.append(hourly_processed_measurements)
     return list_of_hours
 
