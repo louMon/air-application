@@ -1,13 +1,13 @@
 from project.database.models import AirQualityMeasurement, GasInca, FiveMinutesMeasurement, Traffic, \
                                     Wind, Senamhi, InterpolatedPollutants, GridToPredict,Pollutant,\
-                                    PastInterpolatedPollutants
+                                    PastInterpolatedPollutants,TemporalPollutants,EnvironmentalStation
 from collections import defaultdict
 from functools import partial
 from project import app, db
 
 session = db.session
 
-def queryLastPredictedMeasurement(pollutant_name,last_hours,pollutant_unit):
+def queryLastPredictedSpatialMeasurement(pollutant_name,last_hours,pollutant_unit):
     """ Get All qHAWAXs in field - No parameters required """
     columns = None
     if (pollutant_unit=='ppb'):
@@ -22,8 +22,8 @@ def queryLastPredictedMeasurement(pollutant_name,last_hours,pollutant_unit):
 	    							   join(Pollutant, InterpolatedPollutants.pollutant_id == Pollutant.id). \
 	                                   group_by(GridToPredict.id, InterpolatedPollutants.id, Pollutant.id). \
 	                                   filter(Pollutant.pollutant_name == pollutant_name). \
-	                                   filter(InterpolatedPollutants.hour_position < last_hours). \
-	                                   order_by(InterpolatedPollutants.hour_position.asc()).all()
+	                                   filter(InterpolatedPollutants.hour_position <= last_hours). \
+	                                   order_by(InterpolatedPollutants.hour_position.desc()).all()
     return None
 
 def queryNotRecentPredictedMeasurement(pollutant_name,last_hours,pollutant_unit):
@@ -65,3 +65,22 @@ def mergeSameHourPosition(records):
 		result.append(dict(record[1]))
 	return result
     
+
+def queryLastPredictedTemporalMeasurement(pollutant_name,last_hours,pollutant_unit):
+    """ Get All qHAWAXs in field - No parameters required """
+    columns = None
+    if (pollutant_unit=='ppb'):
+        columns = (EnvironmentalStation.lat, EnvironmentalStation.lon, TemporalPollutants.hour_position,
+                   TemporalPollutants.ppb_value, TemporalPollutants.id)
+    elif(pollutant_unit=='ugm3'):
+        columns = (EnvironmentalStation.lat, EnvironmentalStation.lon, TemporalPollutants.hour_position,
+                   TemporalPollutants.ug_m3_value, TemporalPollutants.id)
+
+    if(columns!=None):
+        return session.query(*columns).join(EnvironmentalStation, TemporalPollutants.environmental_station_id == EnvironmentalStation.id). \
+                                       join(Pollutant, TemporalPollutants.pollutant_id == Pollutant.id). \
+                                       group_by(EnvironmentalStation.id, TemporalPollutants.id, Pollutant.id). \
+                                       filter(Pollutant.pollutant_name == pollutant_name). \
+                                       filter(TemporalPollutants.hour_position <= last_hours). \
+                                       order_by(TemporalPollutants.hour_position.desc()).all()
+    return None

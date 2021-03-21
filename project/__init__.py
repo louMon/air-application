@@ -13,7 +13,8 @@ CORS(app)
 db = SQLAlchemy(app)
 
 from project.main.business import environmental_station,user, grid_to_predict, pollutant,prediction_configure
-from project.main.data import air_quality, gas_inca, air_five_minutes_quality,traffic, wind, senahmi, spatial_prediction
+from project.main.data import air_quality, gas_inca, air_five_minutes_quality,traffic, wind, senahmi, \
+							  spatial_prediction, temporal_prediction
 import project.database.models as models
 from project.database.models import User, AirQualityMeasurement, GasInca,FiveMinutesMeasurement,\
 									EnvironmentalStation, Wind, Traffic, Senamhi, InterpolatedPollutants, \

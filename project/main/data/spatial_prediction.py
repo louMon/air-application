@@ -22,11 +22,11 @@ def getHistoricalOfSpatialPrediction():
     pollutant_unit = str(request.args.get('pollutant_unit'))
     try:
         #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
-        predicted_measurements = get_data_helper.queryLastPredictedMeasurement(pollutant_name,last_hours,pollutant_unit)
+        predicted_measurements = get_data_helper.queryLastPredictedSpatialMeasurement(pollutant_name,last_hours,pollutant_unit)
         if(predicted_measurements!=None):
-	        predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
-	        predicted_measurements = get_data_helper.mergeSameHourPosition(predicted_measurements)
-	        return make_response(jsonify(predicted_measurements), 200)
+            predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
+            predicted_measurements = get_data_helper.mergeSameHourPosition(predicted_measurements)
+            return make_response(jsonify(predicted_measurements), 200)
         return make_response('Pollutant Unit is not in the right way', 404)
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})

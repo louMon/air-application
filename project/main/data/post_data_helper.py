@@ -1,5 +1,5 @@
 from project.database.models import AirQualityMeasurement, GasInca, FiveMinutesMeasurement, Traffic, \
-                                    Wind, Senamhi, InterpolatedPollutants, PastInterpolatedPollutants
+                                    Wind, Senamhi, InterpolatedPollutants, PastInterpolatedPollutants,TemporalPollutants
 from project import app, db, socketio
 import dateutil.parser
 import dateutil.tz
@@ -60,4 +60,9 @@ def deleteAllSpatialPredictionInDB():
 
 def deleteAllLastSpatialPredictionInDB():
     session.query(PastInterpolatedPollutants).filter(PastInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
+    session.commit()
+
+def storeTemporalPredictionDB(data_json):
+    temporal_predict = TemporalPollutants(**data_json)
+    session.add(temporal_predict)
     session.commit()

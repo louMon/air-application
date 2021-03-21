@@ -4,7 +4,7 @@ from project import app, db
 session = db.session
 
 def queryGetAllEnvStation():
-	fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, \
+	fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, EnvironmentalStation.module_id,\
 			  EnvironmentalStation.address, EnvironmentalStation.comercial_name, EnvironmentalStation.district)
 	stations = session.query(*fields).all()
 	return None if (stations is []) else session.query(*fields).order_by(EnvironmentalStation.id.desc()).all()
@@ -41,3 +41,11 @@ def beautyFormatDate(date):
 
 def addZero(number):
     return "0"+str(number) if (number<10) else str(number)
+
+def getPollutantID(pollutant_name):
+    """ Helper Pollutant function to get Pollutant ID """
+    return session.query(Pollutant.id).filter_by(pollutant_name=pollutant_name).order_by(Pollutant.id.desc()).first()[0]
+
+def getStationID(module_id):
+    """ Helper Environamental function to get environmental ID """
+    return session.query(EnvironmentalStation.id).filter_by(module_id=module_id).order_by(EnvironmentalStation.id.desc()).first()[0]

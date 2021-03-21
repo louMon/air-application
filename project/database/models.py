@@ -96,6 +96,7 @@ class EnvironmentalStation(db.Model):
     address = db.Column(db.String(300), nullable=False)
     comercial_name = db.Column(db.String(300), nullable=False)
     district = db.Column(db.String(300), nullable=False)
+    module_id = db.Column(db.Integer)
 
 class Pollutant(db.Model):
     __tablename__ = 'pollutant'
