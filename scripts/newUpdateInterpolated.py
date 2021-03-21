@@ -39,7 +39,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = LAST_HOURS * 0.75
+pool_size = LAST_HOURS
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
     for key,value in ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION.items(): 
