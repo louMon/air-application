@@ -39,7 +39,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = 24
+pool_size = LAST_HOURS * 0.75
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
     for key,value in ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION.items(): 
@@ -121,7 +121,6 @@ def obtener_lista_diccionario_columnas_indice(lista_conjuntos_de_datos_interpola
     for conjunto_de_datos_interpolacion_espacial in lista_conjuntos_de_datos_interpolacion_espacial:
         columnas_conjunto_de_datos_interpolacion_espacial = array_columns# list(conjunto_de_datos_interpolacion_espacial.columns) # ['']
         diccionario_columnas_indice = {}
-        
         for i in range(len(columnas_conjunto_de_datos_interpolacion_espacial)):
             diccionario_columnas_indice[columnas_conjunto_de_datos_interpolacion_espacial[i]] = i
         
@@ -142,17 +141,13 @@ def obtener_interpolacion_idw(x, y, z, xi, yi):
     distancias = matriz_de_distancias(x,y, xi,yi)
     # En IDW, los pesos son la inversa de las distancias
     pesos = 1.0 / distancias
-
     # Sumar todos los pesos a 1
     pesos /= pesos.sum(axis=0)
-
     # Multiplicar todos los pesos de cada punto interpolado por todos los valores de la variable a interpolar observados
     zi = np.dot(pesos.T, z)
     return zi
 
 def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
-    #print(conjunto_de_datos_interpolacion_espacial)
-    #print("====================================================================================================================")
     coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
     coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
     valores_predichos = []
