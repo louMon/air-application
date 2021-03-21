@@ -8,15 +8,16 @@ from project import app
 def storeTemporalPrediction():
     """ Recent Temporal Prediction function to record prediction """
     try:
-	    data_json = request.get_json()
-	    array_pollutant = {'CO_ug_m3':'CO','H2S_ug_m3':'H2S','NO2_ug_m3':'NO2','O3_ug_m3':'O3','PM10':'PM10','PM25':'PM25','SO2_ug_m3':'SO2'}
-	    station_id = get_business_helper.getStationID(data_json['module_id'])
-	    for pollutant_name,value in array_pollutant.items():
-	    	pollutant_id = get_business_helper.getPollutantID(value)
-	    	if(pollutant_id!=None):
-	    		new_json = {"pollutant_id":pollutant_id,"environmental_station_id":station_id,"ug_m3_value":data_json[pollutant_name],"hour_position":int(data_json['hour_position'])}
-	    		post_data_helper.storeTemporalPredictionDB(new_json)
-	    return make_response('OK', 200)
+        data_json = request.get_json()
+        array_pollutant = {'CO_ug_m3':'CO','H2S_ug_m3':'H2S','NO2_ug_m3':'NO2','O3_ug_m3':'O3','PM10':'PM10','PM25':'PM25','SO2_ug_m3':'SO2'}
+        station_id = get_business_helper.getStationID(data_json['module_id'])
+        for measurement in data_json["measurement"]:
+            for pollutant_name,value in array_pollutant.items():
+                pollutant_id = get_business_helper.getPollutantID(value)
+                if(pollutant_id!=None):
+                    new_json = {"pollutant_id":pollutant_id,"environmental_station_id":station_id,"ug_m3_value":measurement[pollutant_name],"hour_position":int(measurement['hour_position'])}
+                    post_data_helper.storeTemporalPredictionDB(new_json)
+        return make_response('OK', 200)
     except TypeError as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
