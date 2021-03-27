@@ -18,7 +18,7 @@ def storeTemporalPrediction():
                     new_json = {"pollutant_id":pollutant_id,"environmental_station_id":station_id,"ug_m3_value":measurement[pollutant_name],"hour_position":int(measurement['hour_position'])}
                     post_data_helper.storeTemporalPredictionDB(new_json)
         return make_response('OK', 200)
-    except TypeError as e:
+    except (TypeError,KeyError) as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
