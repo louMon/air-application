@@ -19,7 +19,7 @@ STORE_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_future_spatial_predic
 DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_future_spatial_prediction/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
-LAST_HOURS =12
+LAST_HOURS =6
 #QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 STATION_ID = [18,19,20,21,22,23,24,25,26,27,28,29,30,21] #IOAR QHAWAXS IN ENVIRONMENTAL STATION ID
 
@@ -212,13 +212,14 @@ if __name__ == '__main__':
     indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
     print("Interpolando")
 
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
+    
     pool = multiprocessing.Pool(pool_size)
     pool_results = pool.map(iterateByGrids, json_data_grid)
 
     pool.close()
     pool.join()
 
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     print("--- %s seconds ---" % (time.time() - start_time))
 
     print(datetime.datetime.now())

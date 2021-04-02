@@ -165,6 +165,9 @@ if __name__ == '__main__':
         qWid.append(qhawax_id)
         compid.append(company_id)
 
+    resp_2 = response_nowtime(str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0)))
+    response_API_nowtime.append(resp_2)
+
     for i in range(len(qWid)):
         send_json = []
         for j in range(n_output):
@@ -177,9 +180,6 @@ if __name__ == '__main__':
         resp_1 = response_json_predict(send_json,qWid[i])
         last_timestamp = str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))
         response_API_datapredict.append(resp_1)
-        
-    resp_2 = response_nowtime(last_timestamp)
-    response_API_nowtime.append(resp_2)
 
     print("Logs Envío a API - Predicciones:", response_API_datapredict)
     print("Logs Envío a API - TimeNow:", response_API_nowtime)
