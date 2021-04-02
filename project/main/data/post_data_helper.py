@@ -1,4 +1,4 @@
-from project.database.models import AirQualityMeasurement, GasInca, FiveMinutesMeasurement, Traffic, \
+from project.database.models import AirQualityMeasurement, Traffic, \
                                     Wind, Senamhi, InterpolatedPollutants, PastInterpolatedPollutants,TemporalPollutants
 from project import app, db, socketio
 import dateutil.parser
@@ -26,22 +26,10 @@ def storeSenamhiDataInDB(data):
     session.add(senamhi_data)
     session.commit()
 
-def storeFiveMinuteDataInDB(data):
-    """  Helper Five Minute Measurement function to store five minute average data """
-    five_minute_data = FiveMinutesMeasurement(**data)
-    session.add(five_minute_data)
-    session.commit()
-
 def storeHourlyDataInDB(data):
     """  Helper Hourly Measurement function to store hourly data """
     air_quality_data = AirQualityMeasurement(**data)
     session.add(air_quality_data)
-    session.commit()
-
-def storeGasIncaDataInDB(data):
-    """  Helper Gas Inca function to store gas inca data """
-    gas_inca_data = GasInca(**data)
-    session.add(gas_inca_data)
     session.commit()
 
 def storeSpatialPredictionDB(data_json):
@@ -65,4 +53,8 @@ def deleteAllLastSpatialPredictionInDB():
 def storeTemporalPredictionDB(data_json):
     temporal_predict = TemporalPollutants(**data_json)
     session.add(temporal_predict)
+    session.commit()
+
+def deleteAllTemporalPredictionInDB():
+    session.query(TemporalPollutants).delete(synchronize_session=False)
     session.commit()

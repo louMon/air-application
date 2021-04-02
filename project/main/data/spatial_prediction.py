@@ -54,7 +54,6 @@ def deleteAllSpatialPrediction():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-
 @app.route('/api/delete_all_last_spatial_prediction/', methods=['POST'])
 def deleteAllLastSpatialPrediction():
     """ Grid function to delete grid to predict """

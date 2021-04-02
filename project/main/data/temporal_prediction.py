@@ -39,3 +39,13 @@ def getHistoricalOfTemporalPrediction():
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
+
+@app.route('/api/delete_all_temporal_prediction/', methods=['POST'])
+def deleteAllTemporalPrediction():
+    """ delete all temporal prediction """
+    try:
+        post_data_helper.deleteAllTemporalPredictionInDB()
+        return make_response('Recent Temporal Prediction value has been deleted', 200)
+    except TypeError as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)

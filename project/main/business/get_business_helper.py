@@ -9,10 +9,10 @@ def queryGetAllEnvStation():
 	stations = session.query(*fields).all()
 	return None if (stations is []) else session.query(*fields).order_by(EnvironmentalStation.id.desc()).all()
 
-def queryGetPollutants():
+def queryGetActivePollutants():
     """ Helper Eca Noise function to list all zones - No parameters required """
     columns = (Pollutant.id, Pollutant.pollutant_name, Pollutant.type)
-    return session.query(*columns).order_by(Pollutant.id.desc()).all()
+    return session.query(*columns).filter_by(status=True).order_by(Pollutant.id.desc()).all()
 
 def queryGetGridToPredict():
     """ Helper Eca Noise function to list all zones - No parameters required """

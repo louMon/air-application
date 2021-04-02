@@ -1,4 +1,4 @@
-from project.database.models import AirQualityMeasurement, GasInca, FiveMinutesMeasurement, Traffic, \
+from project.database.models import AirQualityMeasurement, Traffic, \
                                     Wind, Senamhi, InterpolatedPollutants, GridToPredict,Pollutant,\
                                     PastInterpolatedPollutants,TemporalPollutants,EnvironmentalStation
 from collections import defaultdict

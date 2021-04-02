@@ -7,25 +7,6 @@ class User(db.Model):
     email = db.Column(db.String(300), nullable=False, unique=True)
     password_hash = db.Column(db.String(300), nullable=False)
 
-class GasInca(db.Model):
-    __tablename__ = 'gas_inca'
-
-    # Column's definition
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    CO = db.Column(db.Float)
-    CO2 = db.Column(db.Float)
-    H2S = db.Column(db.Float)
-    NO = db.Column(db.Float)
-    NO2 = db.Column(db.Float)
-    O3 = db.Column(db.Float)
-    PM1 = db.Column(db.Float)
-    PM25 = db.Column(db.Float)
-    PM10 = db.Column(db.Float)
-    SO2 = db.Column(db.Float)
-    station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
-    main_inca = db.Column(db.Float)
-
 class AirQualityMeasurement(db.Model):
     __tablename__ = 'air_quality_measurement'
 
@@ -58,34 +39,6 @@ class AirQualityMeasurement(db.Model):
     I_temperature = db.Column(db.Float)
     station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
 
-class FiveMinutesMeasurement(db.Model):
-    __tablename__ = 'five_minute_measurement'
-
-    # Column's definition
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    timestamp_zone = db.Column(db.DateTime, nullable=False)
-    CO = db.Column(db.Float)
-    CO_ug_m3 = db.Column(db.Float)
-    H2S = db.Column(db.Float)
-    H2S_ug_m3 = db.Column(db.Float)
-    NO2 = db.Column(db.Float)
-    NO2_ug_m3 = db.Column(db.Float)
-    O3 = db.Column(db.Float)
-    O3_ug_m3 = db.Column(db.Float)
-    PM25 = db.Column(db.Float)
-    PM10 = db.Column(db.Float)
-    SO2 = db.Column(db.Float)
-    SO2_ug_m3 = db.Column(db.Float)
-    uv = db.Column(db.Float)
-    spl = db.Column(db.Float)
-    humidity = db.Column(db.Float)
-    pressure = db.Column(db.Float)
-    temperature = db.Column(db.Float)
-    lat = db.Column(db.Float)
-    lon = db.Column(db.Float)
-    station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
-
 class EnvironmentalStation(db.Model):
     __tablename__ = 'environmental_station'
 
@@ -105,6 +58,7 @@ class Pollutant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pollutant_name = db.Column(db.String(300), nullable=False)
     type = db.Column(db.String(300), nullable=False)
+    status = db.Column(db.Boolean, nullable=False)
 
 class LastPredict(db.Model):
     __tablename__ = 'last_predict'
