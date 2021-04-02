@@ -40,6 +40,20 @@ def getHistoricalOfTemporalPrediction():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
+@app.route('/api/get_future_records_of_every_station/', methods=['GET'])
+def getFutureRecordsOfEveryStation():
+    """ Get future records to interpolate spatially in future (6h)"""
+    station_id = int(request.args.get('environmental_station_id'))
+    try:
+        #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
+        predicted_measurements = get_data_helper.queryFutureMeasurement(station_id)
+        if(predicted_measurements!=[]):
+            return make_response(jsonify(predicted_measurements), 200)
+        return make_response('There is no future records yet', 404)
+    except Exception as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
 @app.route('/api/delete_all_temporal_prediction/', methods=['POST'])
 def deleteAllTemporalPrediction():
     """ delete all temporal prediction """

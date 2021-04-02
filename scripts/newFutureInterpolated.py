@@ -12,25 +12,23 @@ import pandas as pd
 import math
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
-BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
-STORE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_spatial_prediction/'
-DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
-GET_LAST_HOUR_MEASUREMENT =BASE_URL_IA + 'api/air_quality_measurements_period_all_modules/'
+STORE_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_future_spatial_prediction/'
+DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_future_spatial_prediction/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
-GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
+GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
 LAST_HOURS =12
-QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
+#QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
+STATION_ID = [18,19,20,21,22,23,24,25,26,27,28,29,30,21] #IOAR QHAWAXS IN ENVIRONMENTAL STATION ID
+
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
                    [-12.044226,-77.050832],[-12.0466667,-77.080277778],[-12.0450749,-77.0278449],
                    [-12.047538,-77.035366],[-12.054722,-77.029722],[-12.044236,-77.012467],
                    [-12.051526,-77.077941],[-12.042525,-77.033486],[-12.046736,-77.047594],
                    [-12.045394,-77.036852],[-12.057582,-77.071778]]
-#array_columns = ["CO","H2S","NO2","O3","PM10","PM25","SO2","lat","lon"]
-#DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6}
-#ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6,'timestamp_zone':7,'lat':8,'lon':9,'alt':10}
+
 
 array_columns = ["CO","NO2","PM25","lat","lon"]
 DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1, 'PM25': 2}
@@ -78,12 +76,12 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_sp
 
 def getListOfMeasurementOfAllModules():
     list_of_hours = []
-    final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
-    initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
-    final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
-    for i in range(len(QHAWAX_ARRAY)): #arreglo de los qhawaxs
-        json_params = {'name': 'qH0'+str(QHAWAX_ARRAY[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
-        response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
+    #final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
+    #initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
+    #final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
+    for i in range(len(STATION_ID)): #arreglo de los qhawaxs
+        json_params = {'environmental_station_id': str(STATION_ID[i])}
+        response = requests.get(GET_HOURLY_FUTURE_RECORDS, params=json_params)
         hourly_processed_measurements = response.json()
         if len(hourly_processed_measurements) < LAST_HOURS/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
             continue
@@ -192,18 +190,18 @@ def iterateByGrids(grid_elem):
                 spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
                               "ug_m3_value":round(float(conjunto_valores_predichos[i][value]),3),"hour_position":int(i+1)}
                 print(spatial_json)
-                response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+                response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=spatial_json)
 
 
 if __name__ == '__main__':
     start_time = time.time()
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
-    response_delete = requests.post(DELETE_ALL_SPATIAL_PREDICTION)
+    response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
 
     #Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX
     measurement_list = getListOfMeasurementOfAllModules()
-    print("Obtener data de la base de datos de qHAWAXs y completar los None si cumplen con las condiciones")
+    print("Obtener data de la predicion temporal")
     
     #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
     sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
@@ -220,9 +218,9 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     print("--- %s seconds ---" % (time.time() - start_time))
 
-    print(datetime.datetime.now(dateutil.tz.tzutc()))
+    print(datetime.datetime.now())
     print("===================================================================================")
 

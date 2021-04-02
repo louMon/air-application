@@ -7,8 +7,6 @@ from keras.models import load_model
 import requests
 import datetime
 import time
-import dateutil.parser
-import dateutil.tz
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
@@ -178,20 +176,20 @@ if __name__ == '__main__':
         
         resp_1 = response_json_predict(send_json,qWid[i])
         last_timestamp = str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))
-        resp_2 = response_nowtime(last_timestamp)
-
         response_API_datapredict.append(resp_1)
-        response_API_nowtime.append(resp_2)
+        
+    resp_2 = response_nowtime(last_timestamp)
+    response_API_nowtime.append(resp_2)
 
     print("Logs Envío a API - Predicciones:", response_API_datapredict)
     print("Logs Envío a API - TimeNow:", response_API_nowtime)
-
+    
     data_n_steps = {"CO": CO, "NO2": NO2, "PM25": PM25, "QWid": qWid, "Compid": compid}
     df = pd.DataFrame(data=data_n_steps)
     print(df)
 
     print("--- %s seconds ---" % (time.time() - start_time))
 
-    print(datetime.datetime.now(dateutil.tz.tzutc()))
+    print(datetime.datetime.now())
     print("===================================================================================")
 

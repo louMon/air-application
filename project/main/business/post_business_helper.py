@@ -1,4 +1,4 @@
-from project.database.models import EnvironmentalStation, User, GridToPredict,\
+from project.database.models import EnvironmentalStation, GridToPredict,\
 									InterpolatedPollutants, PredictionConfigure
 from project import app, db
 

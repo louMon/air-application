@@ -18,7 +18,6 @@ GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 STORE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_spatial_prediction/'
 DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
-GET_LAST_HOUR_MEASUREMENT =BASE_URL_IA + 'api/air_quality_measurements_period_all_modules/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 LAST_HOURS =12
@@ -203,7 +202,7 @@ if __name__ == '__main__':
 
     #Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX
     measurement_list = getListOfMeasurementOfAllModules()
-    print("Obtener data de la base de datos de qHAWAXs y completar los None si cumplen con las condiciones")
+    print("Obtener data de la base de datos de qHAWAXs")
     
     #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
     sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
@@ -220,9 +219,9 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0,second=0, microsecond=0))})
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     print("--- %s seconds ---" % (time.time() - start_time))
 
-    print(datetime.datetime.now(dateutil.tz.tzutc()))
+    print(datetime.datetime.now())
     print("===================================================================================")
 

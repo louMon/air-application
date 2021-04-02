@@ -1,4 +1,4 @@
-from project.database.models import EnvironmentalStation, User, Pollutant, GridToPredict, PredictionConfigure
+from project.database.models import EnvironmentalStation, Pollutant, GridToPredict, PredictionConfigure
 from project import app, db
 
 session = db.session

@@ -1,44 +1,6 @@
 from project import db
 
-class User(db.Model):
-    __tablename__ = 'user_ai'
-
-    id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(300), nullable=False, unique=True)
-    password_hash = db.Column(db.String(300), nullable=False)
-
-class AirQualityMeasurement(db.Model):
-    __tablename__ = 'air_quality_measurement'
-
-    # Column's definition
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, nullable=False)
-    timestamp_zone = db.Column(db.DateTime, nullable=False)
-    CO = db.Column(db.Float)
-    CO_ug_m3 = db.Column(db.Float)
-    H2S = db.Column(db.Float)
-    H2S_ug_m3 = db.Column(db.Float)
-    NO2 = db.Column(db.Float)
-    NO2_ug_m3 = db.Column(db.Float)
-    O3 = db.Column(db.Float)
-    O3_ug_m3 = db.Column(db.Float)
-    PM25 = db.Column(db.Float)
-    PM10 = db.Column(db.Float)
-    SO2 = db.Column(db.Float)
-    SO2_ug_m3 = db.Column(db.Float)
-    uv = db.Column(db.Float)
-    uva = db.Column(db.Float)
-    uvb = db.Column(db.Float)
-    spl = db.Column(db.Float)
-    humidity = db.Column(db.Float)
-    pressure = db.Column(db.Float)
-    temperature = db.Column(db.Float)
-    lat = db.Column(db.Float)
-    lon = db.Column(db.Float)
-    alt = db.Column(db.Float)
-    I_temperature = db.Column(db.Float)
-    station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
-
+#Registro de las estaciones para las predicciones temporales de cada uno.
 class EnvironmentalStation(db.Model):
     __tablename__ = 'environmental_station'
 
@@ -51,6 +13,7 @@ class EnvironmentalStation(db.Model):
     district = db.Column(db.String(300), nullable=False)
     module_id = db.Column(db.Integer)
 
+#Registro de los contaminantes gas o polvo con su estado correspondiente
 class Pollutant(db.Model):
     __tablename__ = 'pollutant'
 
@@ -60,14 +23,7 @@ class Pollutant(db.Model):
     type = db.Column(db.String(300), nullable=False)
     status = db.Column(db.Boolean, nullable=False)
 
-class LastPredict(db.Model):
-    __tablename__ = 'last_predict'
-
-    # Column's definition
-    id = db.Column(db.Integer, primary_key=True)
-    last_time_spatial_prediction = db.Column(db.DateTime, nullable=False)
-    last_time_temporal_prediction = db.Column(db.DateTime, nullable=False)
-
+#Registro de las grillas que no son un modulo o estacion
 class GridToPredict(db.Model):
     __tablename__ = 'grid_to_predict'
 
@@ -77,6 +33,17 @@ class GridToPredict(db.Model):
     lon = db.Column(db.Float)
     has_qhawax = db.Column(db.Boolean, nullable=False)
 
+#Tabla de registro de la ultima vez de ejecucion de cada script
+class PredictionConfigure(db.Model):
+    __tablename__ = 'prediction_configure'
+
+    # Column's definition
+    id = db.Column(db.Integer, primary_key=True)
+    model_name = db.Column(db.String(300), nullable=False)
+    last_running_timestamp = db.Column(db.DateTime, nullable=False)
+    table_name = db.Column(db.String(300), nullable=False)
+
+#Interpolacion espacial historica
 class InterpolatedPollutants(db.Model):
     __tablename__ = 'interpolated_pollutants'
 
@@ -88,17 +55,7 @@ class InterpolatedPollutants(db.Model):
     ug_m3_value = db.Column(db.Float)
     hour_position= db.Column(db.Integer)
 
-class PastInterpolatedPollutants(db.Model):
-    __tablename__ = 'past_interpolated_pollutants'
-
-    # Column's definition
-    id = db.Column(db.Integer, primary_key=True)
-    pollutant_id = db.Column(db.Integer,db.ForeignKey('pollutant.id'))
-    grid_id = db.Column(db.Integer,db.ForeignKey('grid_to_predict.id'))
-    ppb_value = db.Column(db.Float)
-    ug_m3_value = db.Column(db.Float)
-    hour_position= db.Column(db.Integer)
-
+#Calidad del aire a futuro
 class TemporalPollutants(db.Model):
     __tablename__ = 'temporal_pollutants'
 
@@ -110,15 +67,19 @@ class TemporalPollutants(db.Model):
     ug_m3_value = db.Column(db.Float)
     hour_position= db.Column(db.Integer)
 
-class PredictionConfigure(db.Model):
-    __tablename__ = 'prediction_configure'
+#Interpolacion espacial a futuro
+class FutureInterpolatedPollutants(db.Model):
+    __tablename__ = 'future_interpolated_pollutants'
 
     # Column's definition
     id = db.Column(db.Integer, primary_key=True)
-    model_name = db.Column(db.String(300), nullable=False)
-    last_running_timestamp = db.Column(db.DateTime, nullable=False)
-    table_name = db.Column(db.String(300), nullable=False)
+    pollutant_id = db.Column(db.Integer,db.ForeignKey('pollutant.id'))
+    grid_id = db.Column(db.Integer,db.ForeignKey('grid_to_predict.id'))
+    ppb_value = db.Column(db.Float)
+    ug_m3_value = db.Column(db.Float)
+    hour_position= db.Column(db.Integer)
 
+#Registro de variables de viento del API Open Weather API
 class Wind(db.Model):
     __tablename__ = 'wind'
 
@@ -134,6 +95,7 @@ class Wind(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
 
+#Registro de variables de trafico del API de Google Maps
 class Traffic(db.Model):
     __tablename__ = 'traffic'
 
@@ -150,6 +112,7 @@ class Traffic(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False)
     station_id = db.Column(db.Integer, db.ForeignKey('environmental_station.id'))
 
+#Registro de variables de la estacion del Senahmi
 class Senamhi(db.Model):
     __tablename__ = 'senamhi'
 
