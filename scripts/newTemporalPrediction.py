@@ -136,9 +136,9 @@ if __name__ == '__main__':
     n_features = 3
     n_output = 6
 
-    model_CO = load_model('h5Files/Model_LSTM_CO_Final.h5')
-    model_NO2 = load_model('h5Files/Model_LSTM_NO_Final.h5')
-    model_PM25 = load_model('h5Files/Model_LSTM_PM25_Final.h5')
+    model_CO = load_model('/var/www/html/air-application/h5Files/Model_LSTM_CO_Final.h5')
+    model_NO2 = load_model('/var/www/html/air-application/h5Files/Model_LSTM_NO_Final.h5')
+    model_PM25 = load_model('/var/www/html/air-application/h5Files/Model_LSTM_PM25_Final.h5')
 
     response_API_datapredict, response_API_nowtime = [], []
 
