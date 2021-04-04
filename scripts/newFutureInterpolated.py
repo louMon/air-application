@@ -12,7 +12,6 @@ import pandas as pd
 import math
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
-
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 STORE_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_future_spatial_prediction/'
@@ -76,9 +75,6 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_sp
 
 def getListOfMeasurementOfAllModules():
     list_of_hours = []
-    #final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
-    #initial_timestamp = (final_timestamp - datetime.timedelta(hours=LAST_HOURS-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
-    #final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
     for i in range(len(STATION_ID)): #arreglo de los qhawaxs
         json_params = {'environmental_station_id': str(STATION_ID[i])}
         response = requests.get(GET_HOURLY_FUTURE_RECORDS, params=json_params)

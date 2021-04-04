@@ -78,10 +78,25 @@ def mergeSameHourPosition(records):
 def queryFutureMeasurement(station_id):
     """ Get future measurements of environmental station """
     columns = (TemporalPollutants.hour_position,TemporalPollutants.ug_m3_value, 
-               TemporalPollutants.pollutant_id, TemporalPollutants.environmental_station_id)
+               TemporalPollutants.pollutant_id, Pollutant.pollutant_name, TemporalPollutants.environmental_station_id)
     future_measurements = session.query(*columns).\
+                                  join(Pollutant, TemporalPollutants.pollutant_id == Pollutant.id). \
+                                  group_by(TemporalPollutants.id, Pollutant.id). \
                                   filter(TemporalPollutants.environmental_station_id == station_id). \
                                   order_by(TemporalPollutants.hour_position.asc()).all()
     return [measurement._asdict() for measurement in future_measurements]
+
+def mergeSameHoursDictionary(predicted_measurements):
+    total_hours = 6
+    all_hours = []
+    for i in range(total_hours):
+      sameHourDictionary ={}
+      sameHourDictionary["hour_position"] = i+1
+      for measurement in predicted_measurements:
+        if(measurement["hour_position"]==i+1):
+          sameHourDictionary[measurement["pollutant_name"]]=measurement["ug_m3_value"]
+      print(sameHourDictionary)
+      all_hours.append(sameHourDictionary)
+    return all_hours
 
 

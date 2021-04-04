@@ -47,8 +47,9 @@ def getFutureRecordsOfEveryStation():
     try:
         #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
         predicted_measurements = get_data_helper.queryFutureMeasurement(station_id)
-        if(predicted_measurements!=[]):
-            return make_response(jsonify(predicted_measurements), 200)
+        merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements)
+        if(merged_predicted_measurements!=[]):
+            return make_response(jsonify(merged_predicted_measurements), 200)
         return make_response('There is no future records yet', 404)
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
