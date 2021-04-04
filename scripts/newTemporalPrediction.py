@@ -172,9 +172,9 @@ if __name__ == '__main__':
         send_json = []
         for j in range(n_output):
             if CO[i] != "Insufficient Data":
-                hour_station_json = {"CO_ug_m3":CO[i][j],"H2S_ug_m3":'nan',"NO2_ug_m3":NO2[i][j],"O3_ug_m3":'nan',"SO2_ug_m3":'nan',"PM10":'nan',"PM25":PM25[i][j], "hour_position":(j+1)}
+                hour_station_json = {"CO_ug_m3":CO[i][j],"H2S_ug_m3":None,"NO2_ug_m3":NO2[i][j],"O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":PM25[i][j], "hour_position":(j+1)}
             else:
-                hour_station_json = {"CO_ug_m3":'nan',"H2S_ug_m3":'nan',"NO2_ug_m3":'nan',"O3_ug_m3":'nan',"SO2_ug_m3":'nan',"PM10":'nan',"PM25":'nan',"hour_position":(j+1)}
+                hour_station_json = {"CO_ug_m3":None,"H2S_ug_m3":None,"NO2_ug_m3":None,"O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":None,"hour_position":(j+1)}
             send_json.append(hour_station_json)
         
         resp_1 = response_json_predict(send_json,qWid[i])

@@ -3,6 +3,8 @@ from project import app, db
 
 session = db.session
 
+dictModelConfigure = {"Historical_Spatial":1,"Forecasting":2,"Future_Spatial":3}
+
 def queryGetAllEnvStation():
 	fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, EnvironmentalStation.module_id,\
 			  EnvironmentalStation.address, EnvironmentalStation.comercial_name, EnvironmentalStation.district)
@@ -30,11 +32,13 @@ def TileDoesNotExist(json):
         return False
     return True
 
-def queryGetSpatialConfigure(model_type):
+def queryGetModelConfigure(model_type):
     """ Helper Eca Noise function to list all zones - No parameters required """
-    id_value = 1 if(model_type=='Spatial') else 2
-    last_running = session.query(PredictionConfigure.last_running_timestamp).filter_by(id=id_value).all()[0][0]
-    return beautyFormatDate(last_running)
+    if(model_type in dictModelConfigure):
+        id_value = dictModelConfigure[model_type]
+        last_running = session.query(PredictionConfigure.last_running_timestamp).filter_by(id=id_value).all()[0][0]
+        return beautyFormatDate(last_running)
+    return None
 
 def beautyFormatDate(date):
     return addZero(date.month)+"-"+addZero(date.day)+"-"+addZero(date.year)+" "+addZero(date.hour)+":"+addZero(date.minute)+":"+addZero(date.second)

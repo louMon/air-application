@@ -8,8 +8,11 @@ def getPredictionConfigureByModelType():
     """ To list all grid in a combo box - No parameters required """
     model_type = str(request.args.get('model_type'))
     try:
-        spatialConfigure = get_business_helper.queryGetSpatialConfigure(model_type)
-        return make_response(jsonify(spatialConfigure), 200)
+        modelConfigure = get_business_helper.queryGetModelConfigure(model_type)
+        if(modelConfigure is not None):
+            return make_response(jsonify(modelConfigure), 200)
+        json_message = jsonify({'warning': 'Los tipos de modelos correctos son (1)Historical_Spatial, (2)Forecasting, (3)Future_Spatial'})
+        return make_response(json_message, 400)
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
