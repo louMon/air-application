@@ -31,7 +31,7 @@ QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-
 
 array_columns = ["CO","NO2","PM25","lat","lon"]
 DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1, 'PM25': 2}
-ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1,'PM25': 2,'timestamp_zone':3,'lat':4,'lon':5,'alt':6}
+ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1,'PM25': 2,'hour_position':3,'lat':4,'lon':5}
 
 NOMBRE_COLUMNA_COORDENADAS_X = 'lon'
 NOMBRE_COLUMNA_COORDENADAS_Y = 'lat'
@@ -52,23 +52,26 @@ def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
 
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_specific):
     average_valid_processed_measurement = []
-    pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
+    pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'hour_position':[],'lat':[],'lon':[]}
     for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
         sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
         if(None in sensor_values):
+            if all([value is None for value in sensor_values]):
+                continue
             df_sensor =pd.DataFrame(sensor_values)
             df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
             sensor_values = df_sensor[0].tolist() 
         pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
-    for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
+    for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (todos tienen 6)
         json = {}
         for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para rearmar el json
-            json[key] = pollutant_array_json[key][elem_hour]
-            #Estas lineas son para actualizar las posiciones de los qhawaxs con su real ubicacion
-            if(key=='lat'):
-                json[key] =  qhawax_location_specific[0]
-            if(key=='lon'):
-                json[key] =  qhawax_location_specific[1]
+            if(pollutant_array_json[key]!=[]):
+                json[key] = pollutant_array_json[key][elem_hour]
+                #Estas lineas son para actualizar las posiciones de los qhawaxs con su real ubicacion
+                if(key=='lat'):
+                    json[key] =  qhawax_location_specific[0]
+                if(key=='lon'):
+                    json[key] =  qhawax_location_specific[1]
         average_valid_processed_measurement.append(json)
 
     return average_valid_processed_measurement
@@ -183,9 +186,9 @@ def iterateByGrids(grid_elem):
         for key,value in DICCIONARIO_INDICES_VARIABLES_PREDICCION.items():
             pollutant_id = getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
-                spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
+                future_spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
                               "ug_m3_value":round(float(conjunto_valores_predichos[i][value]),3),"hour_position":int(i+1)}
-                print(spatial_json)
+                print(future_spatial_json)
                 response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=spatial_json)
 
 
