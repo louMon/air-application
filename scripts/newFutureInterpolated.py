@@ -19,7 +19,6 @@ DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_future_spat
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
 LAST_HOURS =6
-#QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 STATION_ID = [18,19,20,21,22,23,24,25,26,27,28,29,30,21] #IOAR QHAWAXS IN ENVIRONMENTAL STATION ID
 
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
@@ -41,7 +40,7 @@ sort_list_without_json = None
 indice_columna_coordenadas_x = None
 indice_columna_coordenadas_y = None
 json_data_pollutant = None
-pool_size = 8
+pool_size = 6
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
     for key,value in ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION.items(): 
@@ -55,9 +54,7 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_sp
     pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'hour_position':[],'lat':[],'lon':[]}
     for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
         sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
-        if(None in sensor_values):
-            if all([value is None for value in sensor_values]):
-                continue
+        if(None in sensor_values) and not all([value is None for value in sensor_values]):
             df_sensor =pd.DataFrame(sensor_values)
             df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
             sensor_values = df_sensor[0].tolist() 
@@ -108,7 +105,7 @@ def sortListOfMeasurementPerHour(measurement_list):
         for hour_elem in range(len(hour_n)):
             flag=False
             for measurement_elem in range(len(hour_n[hour_elem])):
-                if(math.isnan(hour_n[hour_elem][measurement_elem])):
+                if(hour_n[hour_elem][measurement_elem] == None or math.isnan(hour_n[hour_elem][measurement_elem])):
                     flag=True
                     continue
             if(flag==False):
@@ -150,17 +147,18 @@ def obtener_interpolacion_idw(x, y, z, xi, yi):
     return zi
 
 def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
-    coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
-    coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
-    valores_predichos = []
-    for indice_columna_interpolacion in DICCIONARIO_INDICES_VARIABLES_PREDICCION.values():
-        valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_interpolacion]
-        valor_variable_interpolacion_interpolado = obtener_interpolacion_idw(coordenadas_x_conjunto_de_datos_interpolacion_espacial, coordenadas_y_conjunto_de_datos_interpolacion_espacial, valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial, coordenada_x_prediccion, coordenada_y_prediccion)
-        valores_predichos.append(valor_variable_interpolacion_interpolado)
+    if(conjunto_de_datos_interpolacion_espacial!=[]):
+        coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
+        coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
+        valores_predichos = []
+        for indice_columna_interpolacion in DICCIONARIO_INDICES_VARIABLES_PREDICCION.values():
+            valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_interpolacion]
+            valor_variable_interpolacion_interpolado = obtener_interpolacion_idw(coordenadas_x_conjunto_de_datos_interpolacion_espacial, coordenadas_y_conjunto_de_datos_interpolacion_espacial, valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial, coordenada_x_prediccion, coordenada_y_prediccion)
+            valores_predichos.append(valor_variable_interpolacion_interpolado)
 
-    valores_predichos.insert(INDICE_PM1, 0.0)
-
-    return np.array(valores_predichos)
+        valores_predichos.insert(INDICE_PM1, 0.0)
+        return np.array(valores_predichos)
+    return []
 
 def obtenerListaInterpolacionesPasadasEnUnPunto(lista_conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
     #cada elemento es el dataframe de los 8 modulos en la hora N.
@@ -189,7 +187,7 @@ def iterateByGrids(grid_elem):
                 future_spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
                               "ug_m3_value":round(float(conjunto_valores_predichos[i][value]),3),"hour_position":int(i+1)}
                 print(future_spatial_json)
-                response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=spatial_json)
+                response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=future_spatial_json)
 
 
 if __name__ == '__main__':
@@ -210,7 +208,6 @@ if __name__ == '__main__':
     indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
     indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
     print("Interpolando")
-
     response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     
     pool = multiprocessing.Pool(pool_size)
