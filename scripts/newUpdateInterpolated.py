@@ -20,16 +20,13 @@ STORE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_spatial_prediction/'
 DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
-LAST_HOURS =24
+LAST_HOURS =18
 QHAWAX_ARRAY = [37,38,39,40,41,43,45,47,48,49,50,51,52,54] #IOAR QHAWAXS
 QHAWAX_LOCATION = [[-12.045286,-77.030902],[-12.050278,-77.026111],[-12.041025,-77.043454],
-                   [-12.044226,-77.050832],[-12.0466667,-77.080277778],[-12.0450749,-77.0278449],
+                   [-12.044226,-77.050832],[-12.046667,-77.080278],[-12.0450749,-77.027849],
                    [-12.047538,-77.035366],[-12.054722,-77.029722],[-12.044236,-77.012467],
                    [-12.051526,-77.077941],[-12.042525,-77.033486],[-12.046736,-77.047594],
                    [-12.045394,-77.036852],[-12.057582,-77.071778]]
-#array_columns = ["CO","H2S","NO2","O3","PM10","PM25","SO2","lat","lon"]
-#DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6}
-#ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0, 'H2S': 1, 'NO2': 2, 'O3': 3, 'PM10': 4, 'PM25': 5, 'SO2': 6,'timestamp_zone':7,'lat':8,'lon':9,'alt':10}
 
 array_columns = ["CO","NO2","PM25","lat","lon"]
 DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1, 'PM25': 2}
@@ -52,25 +49,26 @@ def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
             continue
     return pollutant_array_json
 
-def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_location_specific):
+def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location):
     average_valid_processed_measurement = []
     pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
     for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
-        sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
-        if(None in sensor_values):
-            df_sensor =pd.DataFrame(sensor_values)
-            df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
-            sensor_values = df_sensor[0].tolist() 
-        pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
+        if(sensor_name in pollutant_array_json):
+            sensor_values = [measurement[sensor_name] for measurement in valid_processed_measurements]
+            if(None in sensor_values):
+                df_sensor =pd.DataFrame(sensor_values)
+                df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
+                sensor_values = df_sensor[0].tolist() 
+            pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
     for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
         json = {}
         for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para rearmar el json
             json[key] = pollutant_array_json[key][elem_hour]
             #Estas lineas son para actualizar las posiciones de los qhawaxs con su real ubicacion
             if(key=='lat'):
-                json[key] =  qhawax_location_specific[0]
+                json[key] =  qhawax_specific_location[0]
             if(key=='lon'):
-                json[key] =  qhawax_location_specific[1]
+                json[key] =  qhawax_specific_location[1]
         average_valid_processed_measurement.append(json)
 
     return average_valid_processed_measurement
@@ -138,7 +136,6 @@ def matriz_de_distancias(x0, y0, x1, y1):
     # Realizar una matriz de distancias entre observaciones por pares
     d0 = np.subtract.outer(observado[:,0], interpolado[:,0])
     d1 = np.subtract.outer(observado[:,1], interpolado[:,1])
-
     return np.hypot(d0, d1)
 
 def obtener_interpolacion_idw(x, y, z, xi, yi):
@@ -152,6 +149,8 @@ def obtener_interpolacion_idw(x, y, z, xi, yi):
     return zi
 
 def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
+    if(type(conjunto_de_datos_interpolacion_espacial) is list):
+        conjunto_de_datos_interpolacion_espacial = np.array(conjunto_de_datos_interpolacion_espacial)
     coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
     coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
     valores_predichos = []
@@ -159,7 +158,6 @@ def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indi
         valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_interpolacion]
         valor_variable_interpolacion_interpolado = obtener_interpolacion_idw(coordenadas_x_conjunto_de_datos_interpolacion_espacial, coordenadas_y_conjunto_de_datos_interpolacion_espacial, valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial, coordenada_x_prediccion, coordenada_y_prediccion)
         valores_predichos.append(valor_variable_interpolacion_interpolado)
-
     valores_predichos.insert(INDICE_PM1, 0.0)
 
     return np.array(valores_predichos)
@@ -167,7 +165,6 @@ def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indi
 def obtenerListaInterpolacionesPasadasEnUnPunto(lista_conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
     #cada elemento es el dataframe de los 8 modulos en la hora N.
     conjunto_valores_predichos = [obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion) for conjunto_de_datos_interpolacion_espacial in lista_conjunto_de_datos_interpolacion_espacial]
-
     return np.array(conjunto_valores_predichos)
 
 
@@ -177,8 +174,52 @@ def getPollutantID(json_data_pollutant,pollutant_name):
             return json_data_pollutant[i]['id']
     return None
 
+def deg2rad(deg):
+    return deg * (math.pi/180)
+
+def getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2):
+    R = 6371 # Radius of the earth in km
+    dLat = deg2rad(lat2-lat1)  #  deg2rad below
+    dLon = deg2rad(lon2-lon1)
+    a = math.sin(dLat/2) * math.sin(dLat/2) + math.cos(deg2rad(lat1)) * math.cos(deg2rad(lat2)) * math.sin(dLon/2) * math.sin(dLon/2)
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+    d = R * c #  Distance in km
+    return d
+
+def getNearestStations(stations, lat , lon, k=4):
+    return sorted(stations, key= lambda station:(getDistanceFromLatLonInKm(lat,lon, station[0], station[1])), reverse=False)
+
+def sortByPosition(e):
+    return e['position']
+
+def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json):
+    new_sort_list_without_json = []
+    for hour in sort_list_without_json:
+        hour_n = []
+        for next_qhawax in hour:
+            new_next_qhawax = list(next_qhawax)
+            position_hour = new_next_qhawax[len(next_qhawax)-2:]
+            indicePosicion = near_qhawaxs.index(position_hour)
+            dictQhawaxMeasurement = {"position":indicePosicion,"next_qhawax":next_qhawax}
+            hour_n.append(dictQhawaxMeasurement)
+        new_sort_list_without_json.append(hour_n)
+
+    result_measurement_by_hour = []
+    for hour in new_sort_list_without_json:
+        hour.sort(key=sortByPosition)
+        result_hour=[]
+        for next_qhawax in hour:
+            result_hour.append(next_qhawax["next_qhawax"])
+        result_hour = result_hour[:4]
+        result_measurement_by_hour.append(result_hour)
+    return result_measurement_by_hour
+
 def iterateByGrids(grid_elem):
-    conjunto_valores_predichos = obtenerListaInterpolacionesPasadasEnUnPunto(sort_list_without_json, \
+    near_qhawaxs = getNearestStations(QHAWAX_LOCATION, grid_elem['lat'] , grid_elem['lon'], k=4)
+    new_sort_list_without_json = filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json)
+
+    #Luego con el filtro de estaciones se deberia interpolar
+    conjunto_valores_predichos = obtenerListaInterpolacionesPasadasEnUnPunto(new_sort_list_without_json, \
                                                                              indice_columna_coordenadas_x, \
                                                                              indice_columna_coordenadas_y, \
                                                                              grid_elem['lat'], \
@@ -202,16 +243,14 @@ if __name__ == '__main__':
 
     #Obtener data de la base de datos de qHAWAXs y contar los None de cada contaminante de cada qHAWAX
     measurement_list = getListOfMeasurementOfAllModules()
-    print("Obtener data de la base de datos de qHAWAXs")
     
     #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
     sort_list_without_json = sortListOfMeasurementPerHour(measurement_list)
-    print("Arreglo de jsons ordenados por hora del mas antiguo al mas actual")
+
     #Interpolando
     lista_diccionario_columnas_indice = obtener_lista_diccionario_columnas_indice(sort_list_without_json)
     indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
     indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
-    print("Interpolando")
 
     response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
 
