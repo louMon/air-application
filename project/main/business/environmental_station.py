@@ -14,7 +14,6 @@ def storeEnvStation():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-
 @app.route('/api/get_all_env_station/', methods=['GET'])
 def getAllEnvStation():
     """ To list all station in a combo box - No parameters required """
