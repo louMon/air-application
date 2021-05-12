@@ -60,9 +60,7 @@ def iterateByGrids(grid_elem):
             if(pollutant_id!=None):
                 spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
                               "ug_m3_value":round(float(conjunto_valores_predichos[i][value]),3),"hour_position":int(i+1)}
-                print(spatial_json)
                 response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
-
 
 if __name__ == '__main__':
     start_time = time.time()

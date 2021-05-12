@@ -8,15 +8,9 @@ array_columns = ["CO","NO2","PM25","lat","lon"]
 INDICE_PM1 = 4
 
 def getDetailOfEnvStation(json_all_env_station):
-    QHAWAX_ID_ARRAY=[]
-    QHAWAX_LOCATION=[]
-    STATION_ID_ARRAY=[]
-    for env_station in json_all_env_station:
-        if(env_station['module_id']!=None):
-            if(env_station['module_id']>=37 and env_station['module_id']<=54):
-                STATION_ID_ARRAY.append(env_station['id'])
-                QHAWAX_ID_ARRAY.append(env_station['module_id'])
-                QHAWAX_LOCATION.append([env_station['lat'],env_station['lon']])
+    STATION_ID_ARRAY = [env_station['id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
+    QHAWAX_ID_ARRAY = [ env_station['module_id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
+    QHAWAX_LOCATION = [ [env_station['lat'],env_station['lon']] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ]         
     return STATION_ID_ARRAY,QHAWAX_ID_ARRAY,QHAWAX_LOCATION
 
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):

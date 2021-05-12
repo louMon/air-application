@@ -15,6 +15,7 @@ DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_predicti
 STORE_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/store_temporal_prediction/'
 RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
 AVERAGE_VALID_PROCESSED = BASE_URL_QAIRA +'api/average_valid_processed_period/'
+H5_PROD = '/var/www/html/air-application/'
 
 # Define Station Parameters:
 qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(43,3),(45,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(54,3)]
@@ -59,12 +60,13 @@ def predict_air_quality(data, value_type, model, n_features, n_target_values, n_
     # Generate array of pollutant data (always 18 elements initialized with NaN values so the missing will be interpolated).
     X_input = np.ones((time_steps_in,n_features))*np.nan
     for i in range(len(data)):
-        if value_type == "CO":
-            X_input[i] = [data[i]["CO_ug_m3"], data[i]["humidity"], data[i]["temperature"]]
-        elif value_type == "NO2":
-            X_input[i] = [data[i]["NO2_ug_m3"], data[i]["humidity"], data[i]["temperature"]]
-        elif value_type == "PM25":
-            X_input[i] = [data[i]["PM25"], data[i]["humidity"], data[i]["temperature"]]
+        if(type(data[i]) is dict):
+            if value_type == "CO":
+                X_input[i] = [data[i]["CO_ug_m3"], data[i]["humidity"], data[i]["temperature"]]
+            elif value_type == "NO2":
+                X_input[i] = [data[i]["NO2_ug_m3"], data[i]["humidity"], data[i]["temperature"]]
+            elif value_type == "PM25":
+                X_input[i] = [data[i]["PM25"], data[i]["humidity"], data[i]["temperature"]]
   
     # Replace possible outliers with nan values for future interpolation. 
     # Outlier for CO/NO2/PM25 = [MinValue * 50% , MaxValue * 150%] | Outlier for Hum =  [MinValue * 80% , MaxValue * 120%] | Outlier for Temp =  [MinValue * 70% , MaxValue * 130%] 
@@ -136,9 +138,9 @@ if __name__ == '__main__':
     n_features = 3
     n_output = 6
 
-    model_CO = load_model('/var/www/html/air-application/h5Files/Model_LSTM_CO_Final.h5')
-    model_NO2 = load_model('/var/www/html/air-application/h5Files/Model_LSTM_NO_Final.h5')
-    model_PM25 = load_model('/var/www/html/air-application/h5Files/Model_LSTM_PM25_Final.h5')
+    model_CO = load_model(H5_PROD+'h5Files/Model_LSTM_CO_Final.h5')
+    model_NO2 = load_model(H5_PROD+'h5Files/Model_LSTM_NO_Final.h5')
+    model_PM25 = load_model(H5_PROD+'h5Files/Model_LSTM_PM25_Final.h5')
 
     response_API_datapredict, response_API_nowtime = [], []
 
