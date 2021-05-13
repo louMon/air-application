@@ -30,8 +30,9 @@ def getEnvStation():
     """ Get station - Input Id of station """
     station_id = int(request.args.get('station_id'))
     try:
-        station_detail = get_business_helper.queryGetEnvStation(station_id)
-        return make_response(jsonify(station_detail), 200)
+        station_detail = get_business_helper.getStationDetail(station_id)
+        station_detail_json = station_detail._asdict()
+        return make_response(jsonify(station_detail_json), 200)
     except Exception as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)

@@ -53,3 +53,9 @@ def getPollutantID(pollutant_name):
 def getStationID(module_id):
     """ Helper Environamental function to get environmental ID """
     return session.query(EnvironmentalStation.id).filter_by(module_id=module_id).order_by(EnvironmentalStation.id.desc()).first()[0]
+
+def getStationDetail(module_id):
+    """ Helper Environamental function to get environmental ID """
+    fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, EnvironmentalStation.module_id,\
+              EnvironmentalStation.address, EnvironmentalStation.comercial_name, EnvironmentalStation.district)
+    return session.query(*fields).filter_by(module_id=module_id).order_by(EnvironmentalStation.id.desc()).first()
