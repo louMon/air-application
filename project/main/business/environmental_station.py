@@ -25,6 +25,17 @@ def getAllEnvStation():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
+@app.route('/api/get_all_fondecyt_env_station/', methods=['GET'])
+def getAllFondecytEnvStation():
+    """ To list all station in a combo box - No parameters required """
+    try:
+        allStation = get_business_helper.queryGetAllFondecytEnvStation()
+        allStation = [station._asdict() for station in allStation]
+        return make_response(jsonify(allStation), 200)
+    except Exception as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
 @app.route('/api/get_env_station/', methods=['GET'])
 def getEnvStation():
     """ Get station - Input Id of station """

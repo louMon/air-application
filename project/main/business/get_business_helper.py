@@ -11,6 +11,12 @@ def queryGetAllEnvStation():
 	stations = session.query(*fields).all()
 	return None if (stations is []) else session.query(*fields).order_by(EnvironmentalStation.id.asc()).all()
 
+def queryGetAllFondecytEnvStation():
+    fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, EnvironmentalStation.module_id,\
+              EnvironmentalStation.address, EnvironmentalStation.comercial_name, EnvironmentalStation.district)
+    stations = session.query(*fields).all()
+    return None if (stations is []) else session.query(*fields).filter(EnvironmentalStation.module_id>=1).order_by(EnvironmentalStation.id.asc()).all()
+
 def queryGetActivePollutants():
     """ Helper Eca Noise function to list all zones - No parameters required """
     columns = (Pollutant.id, Pollutant.pollutant_name, Pollutant.type)
