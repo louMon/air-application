@@ -42,8 +42,8 @@ def getListOfMeasurementOfAllModules(STATION_ID,QHAWAX_LOCATION):
     return list_of_hours
 
 def iterateByGrids(grid_elem):
-    near_qhawaxs = helper.getNearestStations(QHAWAX_LOCATION, grid_elem['lat'] , grid_elem['lon'], k=4)
-    new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json)
+    near_qhawaxs = helper.getNearestStations(QHAWAX_LOCATION, grid_elem['lat'] , grid_elem['lon'])
+    new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k=4)
 
     conjunto_valores_predichos = helper.obtenerListaInterpolacionesPasadasEnUnPunto(new_sort_list_without_json, \
                                                                              indice_columna_coordenadas_x, \
@@ -72,7 +72,7 @@ if __name__ == '__main__':
     #Arreglo de jsons ordenados por hora del mas antiguo al mas actual
     sort_list_without_json = helper.sortListOfMeasurementPerHour(measurement_list,LAST_HOURS)
     #Interpolando
-    lista_diccionario_columnas_indice = helper.obtener_lista_diccionario_columnas_indice(sort_list_without_json)
+    lista_diccionario_columnas_indice = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     indice_columna_coordenadas_x = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_X]
     indice_columna_coordenadas_y = lista_diccionario_columnas_indice[0][NOMBRE_COLUMNA_COORDENADAS_Y]
     response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})

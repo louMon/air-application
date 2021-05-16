@@ -67,7 +67,7 @@ def sortListOfMeasurementPerHour(measurement_list,LAST_HOURS):
         sort_list_by_hour.append(new_hour_n_array)
     return sort_list_by_hour
 
-def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json):
+def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k):
     new_sort_list_without_json = []
     for hour in sort_list_without_json:
         hour_n = []
@@ -85,7 +85,7 @@ def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json)
         result_hour=[]
         for next_qhawax in hour:
             result_hour.append(next_qhawax["next_qhawax"])
-        result_hour = result_hour[:4]
+        result_hour = result_hour[:k]
         result_measurement_by_hour.append(result_hour)
     return result_measurement_by_hour
 
@@ -98,7 +98,7 @@ def getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2):
     d = R * c #  Distance in km
     return d
 
-def getNearestStations(stations, lat , lon, k=4):
+def getNearestStations(stations, lat , lon):
     return sorted(stations, key= lambda station:(getDistanceFromLatLonInKm(lat,lon, station[0], station[1])), reverse=False)
 
 def sortByPosition(e):
@@ -156,9 +156,9 @@ def getPollutantID(json_data_pollutant,pollutant_name):
             return json_data_pollutant[i]['id']
     return None
 
-def obtener_lista_diccionario_columnas_indice(lista_conjuntos_de_datos_interpolacion_espacial):
+def getDiccionaryListWithEachIndexColumn(sort_list_without_json):
     lista_diccionario_columnas_indice = []
-    for conjunto_de_datos_interpolacion_espacial in lista_conjuntos_de_datos_interpolacion_espacial:
+    for conjunto_de_datos_interpolacion_espacial in sort_list_without_json:
         columnas_conjunto_de_datos_interpolacion_espacial = array_columns# list(conjunto_de_datos_interpolacion_espacial.columns) # ['']
         diccionario_columnas_indice = {}
         for i in range(len(columnas_conjunto_de_datos_interpolacion_espacial)):

@@ -5,7 +5,6 @@ dnspython==1.16.0
 eventlet==0.31.0
 Flask==1.1.2
 Flask-Cors==3.0.9
-Flask-JSGlue==0.3.1
 Flask-SocketIO==4.3.2
 Flask-SQLAlchemy==2.4.4
 greenlet==1.0.0
