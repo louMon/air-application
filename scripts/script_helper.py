@@ -2,16 +2,16 @@ import math
 import numpy as np
 import pandas as pd
 
-ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1,'PM25': 2,'timestamp_zone':3,'lat':4,'lon':5,'alt':6}
-DICCIONARIO_INDICES_VARIABLES_PREDICCION = {'CO': 0,'NO2': 1, 'PM25': 2}
+dictionary_of_all_var_index= {'CO': 0,'NO2': 1,'PM25': 2,'timestamp_zone':3,'lat':4,'lon':5,'alt':6}
+dictionary_of_var_index_prediction= {'CO': 0,'NO2': 1, 'PM25': 2}
 array_columns = ["CO","NO2","PM25","lat","lon"]
-INDICE_PM1 = 4
+pm1_index = 4
 
 def getDetailOfEnvStation(json_all_env_station):
-    STATION_ID_ARRAY = [env_station['id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
-    QHAWAX_ID_ARRAY = [ env_station['module_id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
-    QHAWAX_LOCATION = [ [env_station['lat'],env_station['lon']] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ]         
-    return STATION_ID_ARRAY,QHAWAX_ID_ARRAY,QHAWAX_LOCATION
+    array_station_id = [env_station['id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
+    array_module_id = [ env_station['module_id'] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ] 
+    array_qhawax_location = [ [env_station['lat'],env_station['lon']] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ]         
+    return array_station_id,array_module_id,array_qhawax_location
 
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):
     average_valid_processed_measurement = []
@@ -89,6 +89,12 @@ def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,
         result_measurement_by_hour.append(result_hour)
     return result_measurement_by_hour
 
+def sortByPosition(e):
+    return e['position']
+
+def deg2rad(deg):
+    return deg * (math.pi/180)
+
 def getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2):
     R = 6371 # Radius of the earth in km
     dLat = deg2rad(lat2-lat1)  #  deg2rad below
@@ -101,50 +107,42 @@ def getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2):
 def getNearestStations(stations, lat , lon):
     return sorted(stations, key= lambda station:(getDistanceFromLatLonInKm(lat,lon, station[0], station[1])), reverse=False)
 
-def sortByPosition(e):
-    return e['position']
-
-def deg2rad(deg):
-    return deg * (math.pi/180)
-
-def matriz_de_distancias(x0, y0, x1, y1):
+def distanceMatrix(x0, y0, x1, y1):
     observado = np.vstack((x0, y0)).T
     interpolado = np.vstack((x1, y1)).T
-    # Realizar una matriz de distancias entre observaciones por pares
     d0 = np.subtract.outer(observado[:,0], interpolado[:,0])
     d1 = np.subtract.outer(observado[:,1], interpolado[:,1])
     return np.hypot(d0, d1)
 
-def obtener_interpolacion_idw(x, y, z, xi, yi):
-    distancias = matriz_de_distancias(x,y, xi,yi)
-    # En IDW, los pesos son la inversa de las distancias
-    pesos = 1.0 / distancias
-    # Sumar todos los pesos a 1
-    pesos /= pesos.sum(axis=0)
-    # Multiplicar todos los pesos de cada punto interpolado por todos los valores de la variable a interpolar observados
-    zi = np.dot(pesos.T, z)
+def getIDWInterpolation(x, y, z, xi, yi):
+    distances = distanceMatrix(x,y, xi,yi)
+    # IDW, weigths are the inverse of the distance inverse
+    weigths = 1.0 / distances
+    # Add all the weights to 1
+    weigths /= weigths.sum(axis=0)
+    # Multiply all the weights of each interpolated point by all the observed values ​​of the variable to be interpolated
+    zi = np.dot(weigths.T, z)
     return zi
 
-def obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
-    if(type(conjunto_de_datos_interpolacion_espacial) is list):
-        conjunto_de_datos_interpolacion_espacial = np.array(conjunto_de_datos_interpolacion_espacial)
-    coordenadas_x_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_x]
-    coordenadas_y_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_coordenadas_y]
-    valores_predichos = []
-    for indice_columna_interpolacion in DICCIONARIO_INDICES_VARIABLES_PREDICCION.values():
-        valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial = conjunto_de_datos_interpolacion_espacial[:, indice_columna_interpolacion]
-        valor_variable_interpolacion_interpolado = obtener_interpolacion_idw(coordenadas_x_conjunto_de_datos_interpolacion_espacial, coordenadas_y_conjunto_de_datos_interpolacion_espacial, valores_variable_interpolacion_conjunto_de_datos_interpolacion_espacial, coordenada_x_prediccion, coordenada_y_prediccion)
-        valores_predichos.append(valor_variable_interpolacion_interpolado)
-    valores_predichos.insert(INDICE_PM1, 0.0)
+def getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column_x, index_column_y, predict_column_x, predict_column_y):
+    if(type(spatial_interpolation_dataset) is list):
+        spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
+    spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
+    spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]
+    predicted_values = []
+    for indice_columna_interpolacion in dictionary_of_var_index_prediction.values():
+        spatial_interpolation_dataset_values = spatial_interpolation_dataset[:, indice_columna_interpolacion]
+        value_interpolated = getIDWInterpolation(spatial_interpolation_dataset_x_column, spatial_interpolation_dataset_y_column, spatial_interpolation_dataset_values, predict_column_x, predict_column_y)
+        predicted_values.append(value_interpolated)
+    predicted_values.insert(pm1_index, 0.0)
+    return np.array(predicted_values)
 
-    return np.array(valores_predichos)
-
-def obtenerListaInterpolacionesPasadasEnUnPunto(lista_conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion):
-    conjunto_valores_predichos = [obtenerInterpolacionEnUnPunto(conjunto_de_datos_interpolacion_espacial, indice_columna_coordenadas_x, indice_columna_coordenadas_y, coordenada_x_prediccion, coordenada_y_prediccion) for conjunto_de_datos_interpolacion_espacial in lista_conjunto_de_datos_interpolacion_espacial]
-    return np.array(conjunto_valores_predichos)
+def getListofPastInterpolationsAtOnePoint(spatial_interpolation_dataset_list, index_column_x, index_column_y, predict_column_x, predict_column_y):
+    predicted_values_dataset = [getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column_x, index_column_y, predict_column_x, predict_column_y) for spatial_interpolation_dataset in spatial_interpolation_dataset_list]
+    return np.array(predicted_values_dataset)
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
-    for key,value in ALL_DICCIONARIO_INDICES_VARIABLES_PREDICCION.items(): 
+    for key,value in dictionary_of_all_var_index.items(): 
         if(sensor_name==key):
             pollutant_array_json[key]=sensor_values
             continue
@@ -163,7 +161,5 @@ def getDiccionaryListWithEachIndexColumn(sort_list_without_json):
         diccionario_columnas_indice = {}
         for i in range(len(columnas_conjunto_de_datos_interpolacion_espacial)):
             diccionario_columnas_indice[columnas_conjunto_de_datos_interpolacion_espacial[i]] = i
-        
         lista_diccionario_columnas_indice.append(diccionario_columnas_indice)
-
     return lista_diccionario_columnas_indice
