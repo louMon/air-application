@@ -7,6 +7,7 @@ from keras.models import load_model
 import requests
 import datetime
 import time
+from global_constants import time_steps_in
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
@@ -15,13 +16,12 @@ DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_predicti
 STORE_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/store_temporal_prediction/'
 RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
 AVERAGE_VALID_PROCESSED = BASE_URL_QAIRA +'api/average_valid_processed_period/'
-H5_PROD = '/var/www/html/air-application/'
+H5_PROD = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/'#'/var/www/html/air-application/'
 
 # Define Station Parameters:
 qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(43,3),(45,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(54,3)]
 #Calculate time now and n_time_steps before.
 CO, NO2, PM25, hum, compid, timestamp, qWid, temp = [], [], [], [], [], [], [], []
-time_steps_in = 18
 
 def minmax_scaler(X_input_norm, vector_max, vector_min):
     X_norm = X_input_norm.copy()
@@ -159,7 +159,6 @@ if __name__ == '__main__':
         result = requests.get(url = AVERAGE_VALID_PROCESSED, params = PARAMS)
         # Parsing data in JSON format.
         data = result.json()
-        #print(len(data))
         #Saving values in dataframe:     
         CO.append(predict_air_quality(data, "CO", model_CO, n_features, n_target_values, n_output, time_steps_in, vector_max_CO, vector_min_CO))
         NO2.append(predict_air_quality(data, "NO2", model_NO2, n_features, n_target_values, n_output, time_steps_in, vector_max_NO2, vector_min_NO2))
@@ -173,7 +172,7 @@ if __name__ == '__main__':
     for i in range(len(qWid)):
         send_json = []
         for j in range(n_output):
-            if CO[i] != "Insufficient Data":
+            if CO[i] != "Insufficient Data" and NO2[i] != "Insufficient Data" and PM25[i] != "Insufficient Data":
                 hour_station_json = {"CO_ug_m3":CO[i][j],"H2S_ug_m3":None,"NO2_ug_m3":NO2[i][j],"O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":PM25[i][j], "hour_position":(j+1)}
             else:
                 hour_station_json = {"CO_ug_m3":None,"H2S_ug_m3":None,"NO2_ug_m3":None,"O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":None,"hour_position":(j+1)}
@@ -189,9 +188,7 @@ if __name__ == '__main__':
     data_n_steps = {"CO": CO, "NO2": NO2, "PM25": PM25, "QWid": qWid, "Compid": compid}
     df = pd.DataFrame(data=data_n_steps)
     print(df)
-
     print("--- %s seconds ---" % (time.time() - start_time))
-
     print(datetime.datetime.now())
     print("===================================================================================")
 
