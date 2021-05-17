@@ -16,7 +16,7 @@ DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_predicti
 STORE_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/store_temporal_prediction/'
 RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
 AVERAGE_VALID_PROCESSED = BASE_URL_QAIRA +'api/average_valid_processed_period/'
-H5_PROD = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/'#'/var/www/html/air-application/'
+H5_PROD = '/var/www/html/air-application/'
 
 # Define Station Parameters:
 qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(43,3),(45,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(54,3)]
