@@ -9,7 +9,7 @@ import math
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
-GET_ALL_FONDECYT_ENV_STATION= 'http://0.0.0.0:5000/' + 'api/get_all_fondecyt_env_station/'
+GET_ALL_FONDECYT_ENV_STATION= BASE_URL_IA + 'api/get_all_fondecyt_env_station/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
@@ -25,23 +25,13 @@ def sortListOfMeasurementPerK(measurement_list,k_times):
     for i in range(k_times):
         k_n = []
         for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
-            #print("*****************************************************************")
-            #print(len(measurement_list[j]))
-            #print(measurement_list[j])
-            #print(k_times)
-            
-            #if(k_times <= len(measurement_list[j])): #Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado
             list_measurement_by_qhawax_by_hour = np.array(measurement_list[j][i])
             k_n.append(list_measurement_by_qhawax_by_hour)
-        #print(k_n)
         new_k_n_array = []
         for k_elem in range(len(k_n)):
             new_k_n_array.append(k_n[k_elem])
         new_k_n_array = np.array(new_k_n_array)
         sort_list_by_k.append(new_k_n_array)
-    #print("----------------------------------------------------------------------")
-    #print(sort_list_by_k)
-    #print("----------------------------------------------------------------------")
     return sort_list_by_k
 
 def getListOfMeasurementOfAllModules(qhawax_array,qhawax_location,weeks):

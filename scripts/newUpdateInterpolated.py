@@ -17,18 +17,18 @@ GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_peri
 GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 
-dictionary_of_var_index_prediction= {'CO': 0,'NO2': 1, 'PM25': 2}
-pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
+pool_size = 8
+last_hours =24
 name_column_x = 'lon'
 name_column_y = 'lat'
+dictionary_of_var_index_prediction= {'CO': 0,'NO2': 1, 'PM25': 2}
 
 index_column_x = None
 index_column_y = None
-sort_list_without_json = None
 json_data_pollutant = None
 array_qhawax_location = None
-pool_size = 8
-last_hours =24
+sort_list_without_json = None
+pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 
 def getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location):
     list_of_hours = []
@@ -48,18 +48,18 @@ def getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location):
 def iterateByGrids(grid_elem):
     near_qhawaxs = helper.getNearestStations(array_qhawax_location, grid_elem['lat'] , grid_elem['lon'])
     new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k=4)
-    conjunto_valores_predichos = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, \
+    dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, \
                                                                              index_column_x, \
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
-    conjunto_valores_predichos=np.asarray(conjunto_valores_predichos).astype(np.float32)
-    for i in range(len(conjunto_valores_predichos)):
+    dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
+    for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
                 spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
-                              "ug_m3_value":round(float(conjunto_valores_predichos[i][value]),3),"hour_position":int(i+1)}
+                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3),"hour_position":int(i+1)}
                 response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
 
 if __name__ == '__main__':
