@@ -1,5 +1,6 @@
 from project.database.models import EnvironmentalStation, GridToPredict,\
-									InterpolatedPollutants, PredictionConfigure
+									InterpolatedPollutants, PredictionConfigure,\
+									FutureInterpolatedPollutants
 from project import app, db
 
 session = db.session
@@ -16,6 +17,8 @@ def storeGridToPredictInDB(data_json):
 
 def deleteGridToPredictInDB():
 	session.query(InterpolatedPollutants).filter(InterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
+	session.commit()
+	session.query(FutureInterpolatedPollutants).filter(FutureInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
 	session.commit()
 	session.query(GridToPredict).filter(GridToPredict.id >= 1).delete(synchronize_session=False)
 	session.commit()
