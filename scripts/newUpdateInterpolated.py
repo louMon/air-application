@@ -50,6 +50,8 @@ def iterateByGrids(grid_elem):
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
+    print("EN ITERATE BY GRIDS ***********************************************")
+    print(dataset_interpolated)
     dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
@@ -66,7 +68,9 @@ if __name__ == '__main__':
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
     response_delete = requests.post(DELETE_ALL_SPATIAL_PREDICTION)
+    print("Dentro de getListOfMeasurementOfAllModules")
     measurement_list = getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location)
+    print("Dentro de sortListOfMeasurementPerHour")
     sort_list_without_json = helper.sortListOfMeasurementPerHour(measurement_list,last_hours_historical_interpolate)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]

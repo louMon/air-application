@@ -5,7 +5,7 @@ last_hours_future_interpolate = 6
 
 #Global constanst future interpolate
 pool_size_historical_interpolate = 8
-last_hours_historical_interpolate =24
+last_hours_historical_interpolate = 24
 
 #Global constanst temporal prediction
 time_steps_in = 18

@@ -1,6 +1,8 @@
 import math
 import numpy as np
 import pandas as pd
+import datetime
+import dateutil.tz
 
 dictionary_of_all_var_index= {'CO': 0,'NO2': 1,'PM25': 2,'timestamp_zone':3,'lat':4,'lon':5,'alt':6}
 dictionary_of_var_index_prediction= {'CO': 0,'NO2': 1, 'PM25': 2}
@@ -44,27 +46,36 @@ def convertJsonToList(json_measurement):
             list_of_measurements.append(json_measurement[array_columns[i]])
     return list_of_measurements
 
-def sortListOfMeasurementPerHour(measurement_list,LAST_HOURS):
+def sortListOfMeasurementPerHour(measurement_list,last_hours):
+    final_timestamp = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=5) #hora del servidor
+    initial_timestamp = final_timestamp - datetime.timedelta(hours=last_hours-1)#cantidad de horas que se vaya a utilizar como comparativo
     sort_list_by_hour = []
-    for i in range(LAST_HOURS):
-        hour_n = []
-        for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
-            if(LAST_HOURS <= len(measurement_list[j])): #Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado
-                list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[j][i])
-                list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
-                hour_n.append(list_measurement_by_qhawax_by_hour)
-        new_hour_n_array = []
-        for hour_elem in range(len(hour_n)):
+    total_number_stations = len(measurement_list)
+    pivot_initial = initial_timestamp
+    for index_hour in range(last_hours): #Horas totales
+        hour_list = [] #Arreglo de mediciones por hora
+        for index_station in range(total_number_stations): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
+            if(index_hour<len(measurement_list[index_station])):
+                if("timestamp_zone" in measurement_list[index_station][index_hour]):
+                    datetime_each_station = datetime.datetime.strptime(measurement_list[index_station][index_hour]["timestamp_zone"], '%a, %d %b %Y %H:%M:%S GMT')
+                    if(datetime_each_station == pivot_initial):
+                        list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[index_station][index_hour])
+                        list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
+                        hour_list.append(list_measurement_by_qhawax_by_hour)
+                    else:
+                        measurement_list[index_station].insert(0, {})
+        pivot_initial = pivot_initial + datetime.timedelta(hours=1)
+        new_hour_list = []
+        for index_new_hour in range(len(hour_list)):
             flag=False
-            for measurement_elem in range(len(hour_n[hour_elem])):
-                if(hour_n[hour_elem][measurement_elem] == None or math.isnan(hour_n[hour_elem][measurement_elem])):
+            for index_new_station in range(len(hour_list[index_new_hour])):
+                if(hour_list[index_new_hour][index_new_station] == None or math.isnan(hour_list[index_new_hour][index_new_station])):
                     flag=True
                     continue
-            if(flag==False):
-                new_hour_n = hour_n[hour_elem]
-                new_hour_n_array.append(new_hour_n)
-        new_hour_n_array = np.array(new_hour_n_array)
-        sort_list_by_hour.append(new_hour_n_array)
+            if(flag==False and len(hour_list[index_new_hour])>0):
+                new_hour_list.append(hour_list[index_new_hour])
+        new_hour_list = np.array(new_hour_list)
+        sort_list_by_hour.append(new_hour_list)
     return sort_list_by_hour
 
 def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k):
@@ -127,15 +138,17 @@ def getIDWInterpolation(x, y, z, xi, yi):
 def getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column_x, index_column_y, predict_column_x, predict_column_y):
     if(type(spatial_interpolation_dataset) is list):
         spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
-    spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
-    spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]
     predicted_values = []
-    for indice_columna_interpolacion in dictionary_of_var_index_prediction.values():
-        spatial_interpolation_dataset_values = spatial_interpolation_dataset[:, indice_columna_interpolacion]
-        value_interpolated = getIDWInterpolation(spatial_interpolation_dataset_x_column, spatial_interpolation_dataset_y_column, spatial_interpolation_dataset_values, predict_column_x, predict_column_y)
-        predicted_values.append(value_interpolated)
-    predicted_values.insert(pm1_index, 0.0)
+    if(len(spatial_interpolation_dataset)>=index_column_x):
+        spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
+        spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]
+        for indice_columna_interpolacion in dictionary_of_var_index_prediction.values():
+            spatial_interpolation_dataset_values = spatial_interpolation_dataset[:, indice_columna_interpolacion]
+            value_interpolated = getIDWInterpolation(spatial_interpolation_dataset_x_column, spatial_interpolation_dataset_y_column, spatial_interpolation_dataset_values, predict_column_x, predict_column_y)
+            predicted_values.append(value_interpolated)
+        predicted_values.insert(pm1_index, 0.0)
     return np.array(predicted_values)
+
 
 def getListofPastInterpolationsAtOnePoint(spatial_interpolation_dataset_list, index_column_x, index_column_y, predict_column_x, predict_column_y):
     predicted_values_dataset = [getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column_x, index_column_y, predict_column_x, predict_column_y) for spatial_interpolation_dataset in spatial_interpolation_dataset_list]
