@@ -30,10 +30,9 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_lo
         for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para rearmar el json
             if(value!=[]):
                 json[key] = pollutant_array_json[key][elem_hour]
-                #Estas lineas son para actualizar las posiciones de los qhawaxs con su real ubicacion
-                if(key=='lat'):
+                if(key=='lat'):#Actualizar posiciones de los qhawaxs con su real ubicacion
                     json[key] =  qhawax_specific_location[0]
-                if(key=='lon'):
+                if(key=='lon'):#Actualizar posiciones de los qhawaxs con su real ubicacion
                     json[key] =  qhawax_specific_location[1]
         average_valid_processed_measurement.append(json)
 
@@ -46,8 +45,9 @@ def convertJsonToList(json_measurement):
             list_of_measurements.append(json_measurement[array_columns[i]])
     return list_of_measurements
 
-def sortListOfMeasurementPerHour(measurement_list,last_hours):
-    final_timestamp = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=5) #hora del servidor
+def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
+    final_timestamp = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) #+ datetime.timedelta(hours=5) #hora del servidor
+    print(final_timestamp)
     initial_timestamp = final_timestamp - datetime.timedelta(hours=last_hours-1)#cantidad de horas que se vaya a utilizar como comparativo
     sort_list_by_hour = []
     total_number_stations = len(measurement_list)
@@ -76,6 +76,29 @@ def sortListOfMeasurementPerHour(measurement_list,last_hours):
                 new_hour_list.append(hour_list[index_new_hour])
         new_hour_list = np.array(new_hour_list)
         sort_list_by_hour.append(new_hour_list)
+    return sort_list_by_hour
+
+def sortListOfMeasurementPerHourFuture(measurement_list,last_hours):
+    sort_list_by_hour = []
+    for i in range(last_hours):
+        hour_n = []
+        for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
+            if(last_hours <= len(measurement_list[j])): #Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado
+                list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[j][i])
+                list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
+                hour_n.append(list_measurement_by_qhawax_by_hour)
+        new_hour_n_array = []
+        for hour_elem in range(len(hour_n)):
+            flag=False
+            for measurement_elem in range(len(hour_n[hour_elem])):
+                if(hour_n[hour_elem][measurement_elem] == None or math.isnan(hour_n[hour_elem][measurement_elem])):
+                    flag=True
+                    continue
+            if(flag==False):
+                new_hour_n = hour_n[hour_elem]
+                new_hour_n_array.append(new_hour_n)
+        new_hour_n_array = np.array(new_hour_n_array)
+        sort_list_by_hour.append(new_hour_n_array)
     return sort_list_by_hour
 
 def filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k):

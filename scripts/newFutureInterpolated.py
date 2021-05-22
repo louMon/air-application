@@ -41,7 +41,6 @@ def getListOfMeasurementOfAllModules(array_station_id,array_qhawax_location):
 def iterateByGrids(grid_elem):
     near_qhawaxs = helper.getNearestStations(array_qhawax_location, grid_elem['lat'] , grid_elem['lon'])
     new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k_value)
-
     dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, \
                                                                              index_column_x, \
                                                                              index_column_y, \
@@ -57,14 +56,14 @@ def iterateByGrids(grid_elem):
                 response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=future_spatial_json)
 
 if __name__ == '__main__':
-    start_time = time.time()
+    start_time = datetime.datetime.now()
     json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
     response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
     measurement_list = getListOfMeasurementOfAllModules(array_station_id,array_qhawax_location)
-    sort_list_without_json = helper.sortListOfMeasurementPerHour(measurement_list,last_hours_future_interpolate)
+    sort_list_without_json = helper.sortListOfMeasurementPerHourFuture(measurement_list,last_hours_future_interpolate)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
@@ -73,7 +72,6 @@ if __name__ == '__main__':
     pool_results = pool.map(iterateByGrids, json_data_grid)
     pool.close()
     pool.join()
-    print("--- %s seconds ---" % (time.time() - start_time))
-    print(datetime.datetime.now())
+    print("Empezo a las {a} y termino a las {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")
 

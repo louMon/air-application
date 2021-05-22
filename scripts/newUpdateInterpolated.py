@@ -50,8 +50,6 @@ def iterateByGrids(grid_elem):
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
-    print("EN ITERATE BY GRIDS ***********************************************")
-    print(dataset_interpolated)
     dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
@@ -62,16 +60,14 @@ def iterateByGrids(grid_elem):
                 response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
 
 if __name__ == '__main__':
-    start_time = time.time()
+    start_time = datetime.datetime.now()
     json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
     response_delete = requests.post(DELETE_ALL_SPATIAL_PREDICTION)
-    print("Dentro de getListOfMeasurementOfAllModules")
     measurement_list = getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location)
-    print("Dentro de sortListOfMeasurementPerHour")
-    sort_list_without_json = helper.sortListOfMeasurementPerHour(measurement_list,last_hours_historical_interpolate)
+    sort_list_without_json = helper.sortListOfMeasurementPerHourHistorical(measurement_list,last_hours_historical_interpolate)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
@@ -80,6 +76,5 @@ if __name__ == '__main__':
     pool_results = pool.map(iterateByGrids, json_data_grid)
     pool.close()
     pool.join()
-    print("--- %s seconds ---" % (time.time() - start_time))
-    print(datetime.datetime.now())
+    print("Empezo a las {a} y termino a las {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")
