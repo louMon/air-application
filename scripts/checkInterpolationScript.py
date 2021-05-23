@@ -15,14 +15,14 @@ GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 column_coordinates_x = 'lon'
 column_coordinates_y = 'lat'
-last_hours =6
-weeks = 2
+last_hours =168
+weeks = 10
 k_number_min = 2
 k_number_max = 8
 
-def sortListOfMeasurementPerK(measurement_list,k_times):
+def sortListOfMeasurementPerK(measurement_list,last_hours):#k_times):
     sort_list_by_k = []
-    for i in range(k_times):
+    for i in range(last_hours):
         k_n = []
         for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
             list_measurement_by_qhawax_by_hour = np.array(measurement_list[j][i])
@@ -36,7 +36,7 @@ def sortListOfMeasurementPerK(measurement_list,k_times):
 
 def getListOfMeasurementOfAllModules(qhawax_array,qhawax_location,weeks):
     list_of_hours = []
-    final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) - datetime.timedelta(weeks=weeks) 
+    final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) - datetime.timedelta(weeks=weeks)
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=last_hours-1)).strftime("%d-%m-%Y %H:%M:%S") 
     final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
     for i in range(len(qhawax_array)): #arreglo de los qhawaxs
@@ -47,6 +47,7 @@ def getListOfMeasurementOfAllModules(qhawax_array,qhawax_location,weeks):
             continue
         hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,qhawax_location[i],pollutant_array_json)
         list_of_hours.append(hourly_processed_measurements)
+        #print(hourly_processed_measurements)
     return list_of_hours
 
 if __name__ == '__main__':
@@ -56,38 +57,46 @@ if __name__ == '__main__':
 	copy_all_env_station = np.asarray(json_all_env_station)
 	k_diff = k_number_max -k_number_min
 	for qhawax_index in range(len(json_all_env_station)):
+		print("En estacion {a}".format(a=qhawax_index))
 		element_to_interpolate = json_all_env_station[qhawax_index]
 		json_all_env_station.remove(element_to_interpolate)
 		qhawax_station_id, qhawax_array,qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
 		measurement_list = getListOfMeasurementOfAllModules(qhawax_array,qhawax_location,weeks)
-		sort_list_without_json = helper.sortListOfMeasurementPerHour(measurement_list,last_hours)
+		sort_list_without_json = helper.sortListOfMeasurementPerHourScript(measurement_list,last_hours,weeks)
 		list_of_indexs_column = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
 		indice_columna_coordenadas_x = list_of_indexs_column[0][column_coordinates_x]
 		indice_columna_coordenadas_y = list_of_indexs_column[0][column_coordinates_y]		
 		k_values = []
 		for k in range(k_number_min,k_number_max):
+			print("\nNumero k: {a}".format(a=k))
 			near_qhawaxs = helper.getNearestStations(qhawax_location, element_to_interpolate['lat'] , element_to_interpolate['lon'])
 			new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k)
 			conjunto_valores_predichos = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, indice_columna_coordenadas_x, indice_columna_coordenadas_y, element_to_interpolate['lat'], element_to_interpolate['lon'])
 			conjunto_valores_predichos=np.asarray(conjunto_valores_predichos).astype(np.float32)
-			k_values.append(conjunto_valores_predichos)		
+			k_values.append(conjunto_valores_predichos)
+			print("Longitud del arreglo de k => {a}: {b}".format(a=k, b=len(conjunto_valores_predichos)))
+		#Valores reales de la medicion de la estacion que fue interpolada
 		one_qhawax_station_id, one_qhawax_array,one_qhawax_location = helper.getDetailOfEnvStation([element_to_interpolate])
 		real_measurement = getListOfMeasurementOfAllModules(one_qhawax_array,one_qhawax_location,weeks)
-		sort_list_by_k = sortListOfMeasurementPerK(k_values,k_diff)
+		
+		sort_list_by_k = sortListOfMeasurementPerK(k_values,last_hours)
+		print("EMPEZANDO CON EL DATAFRAME! *********************************************************************")
 		for print_index in range(len(sort_list_by_k)):
-			co_interpolate = [ sort_list_by_k[print_index][index_co][0] for index_co in range(len(sort_list_by_k[print_index]))]
-			no2_interpolate = [ sort_list_by_k[print_index][index_no2][1] for index_no2 in range(len(sort_list_by_k[print_index]))]
-			pm25_interpolate = [ sort_list_by_k[print_index][index_pm25][2] for index_pm25 in range(len(sort_list_by_k[print_index]))]
-			var_real_measurement = real_measurement[0][print_index]
-			data = {"hour":[print_index+1]*k_diff,"lat": [element_to_interpolate['lat']]*k_diff, "lon": [element_to_interpolate['lon']]*k_diff,"k":range(k_number_min,k_number_max), "CO_interpolate": co_interpolate,"CO_REAL": [var_real_measurement["CO"]]*k_diff,"NO2_interpolate":no2_interpolate,"NO2_REAL": [var_real_measurement["NO2"]]*k_diff,"PM25_interpolate": pm25_interpolate,"PM25_REAL": [var_real_measurement["PM25"]]*k_diff}
-			df = pd.DataFrame(data=data)
-			print(df)
-			df_consolidate = pd.concat([df_consolidate,df])
+			if(len(sort_list_by_k[print_index])>0):
+				co_interpolate = [ sort_list_by_k[print_index][index_co][0] if len(sort_list_by_k[print_index][index_co])>0 else np.nan for index_co in range(len(sort_list_by_k[print_index])) ]
+				no2_interpolate = [ sort_list_by_k[print_index][index_no2][1] if len(sort_list_by_k[print_index][index_no2])>0 else np.nan for index_no2 in range(len(sort_list_by_k[print_index])) ]
+				pm25_interpolate = [ sort_list_by_k[print_index][index_pm25][2] if len(sort_list_by_k[print_index][index_pm25])>0 else np.nan for index_pm25 in range(len(sort_list_by_k[print_index])) ]
+				var_real_measurement = (real_measurement[0][print_index] if(len(real_measurement[0])>print_index) else np.nan) if len(real_measurement)>0 else np.nan
+				var_real_measurement_CO = [var_real_measurement["CO"]]*k_diff if isinstance(var_real_measurement, dict) is True else [var_real_measurement]*k_diff 
+				var_real_measurement_NO2 = [var_real_measurement["NO2"]]*k_diff if isinstance(var_real_measurement, dict) is True else [var_real_measurement]*k_diff
+				var_real_measurement_PM25 = [var_real_measurement["PM25"]]*k_diff if isinstance(var_real_measurement, dict) is True else [var_real_measurement]*k_diff
+				data = {"hour":[print_index+1]*k_diff,"lat": [element_to_interpolate['lat']]*k_diff, "lon": [element_to_interpolate['lon']]*k_diff,"k":range(k_number_min,k_number_max), "CO_interpolate": co_interpolate,"CO_REAL": var_real_measurement_CO,"NO2_interpolate":no2_interpolate,"NO2_REAL": var_real_measurement_NO2,"PM25_interpolate": pm25_interpolate,"PM25_REAL": var_real_measurement_PM25}
+				df = pd.DataFrame(data=data)
+				df_consolidate = pd.concat([df_consolidate,df])
 		json_all_env_station = np.asarray(json_all_env_station)
 		json_all_env_station = (copy_all_env_station.copy()).tolist()
 
 	#En el CSV colocar las constantes elegidas
-
 	#Exportar CSV con todo el consolidado de dataframes
 	df_consolidate.to_csv(r'/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/dfconsolidate.csv')
 

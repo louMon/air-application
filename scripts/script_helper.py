@@ -47,7 +47,38 @@ def convertJsonToList(json_measurement):
 
 def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
     final_timestamp = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) #+ datetime.timedelta(hours=5) #hora del servidor
-    print(final_timestamp)
+    initial_timestamp = final_timestamp - datetime.timedelta(hours=last_hours-1)#cantidad de horas que se vaya a utilizar como comparativo
+    sort_list_by_hour = []
+    total_number_stations = len(measurement_list)
+    pivot_initial = initial_timestamp
+    for index_hour in range(last_hours): #Horas totales
+        hour_list = [] #Arreglo de mediciones por hora
+        for index_station in range(total_number_stations): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
+            if(index_hour<len(measurement_list[index_station])):
+                if("timestamp_zone" in measurement_list[index_station][index_hour]):
+                    datetime_each_station = datetime.datetime.strptime(measurement_list[index_station][index_hour]["timestamp_zone"], '%a, %d %b %Y %H:%M:%S GMT')
+                    if(datetime_each_station == pivot_initial):
+                        list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[index_station][index_hour])
+                        list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
+                        hour_list.append(list_measurement_by_qhawax_by_hour)
+                    else:
+                        measurement_list[index_station].insert(0, {})
+        pivot_initial = pivot_initial + datetime.timedelta(hours=1)
+        new_hour_list = []
+        for index_new_hour in range(len(hour_list)):
+            flag=False
+            for index_new_station in range(len(hour_list[index_new_hour])):
+                if(hour_list[index_new_hour][index_new_station] == None or math.isnan(hour_list[index_new_hour][index_new_station])):
+                    flag=True
+                    continue
+            if(flag==False and len(hour_list[index_new_hour])>0):
+                new_hour_list.append(hour_list[index_new_hour])
+        new_hour_list = np.array(new_hour_list)
+        sort_list_by_hour.append(new_hour_list)
+    return sort_list_by_hour
+
+def sortListOfMeasurementPerHourScript(measurement_list,last_hours,weeks):
+    final_timestamp = datetime.datetime.now().replace(minute=0, second=0, microsecond=0) - datetime.timedelta(weeks=weeks) + datetime.timedelta(hours=5) #hora del servidor
     initial_timestamp = final_timestamp - datetime.timedelta(hours=last_hours-1)#cantidad de horas que se vaya a utilizar como comparativo
     sort_list_by_hour = []
     total_number_stations = len(measurement_list)
@@ -162,7 +193,7 @@ def getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column
     if(type(spatial_interpolation_dataset) is list):
         spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
     predicted_values = []
-    if(len(spatial_interpolation_dataset)>=index_column_x):
+    if(len(spatial_interpolation_dataset)>0):
         spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
         spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]
         for indice_columna_interpolacion in dictionary_of_var_index_prediction.values():
