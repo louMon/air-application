@@ -52,7 +52,7 @@ def iterateByGrids(grid_elem):
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
                 future_spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
-                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3),"hour_position":int(i+1)}
+                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,"hour_position":int(i+1)}
                 response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=future_spatial_json)
 
 if __name__ == '__main__':
