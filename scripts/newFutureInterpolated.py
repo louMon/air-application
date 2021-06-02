@@ -46,7 +46,7 @@ def iterateByGrids(grid_elem):
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
-    dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
+    #dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
