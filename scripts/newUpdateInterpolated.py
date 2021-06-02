@@ -50,13 +50,22 @@ def iterateByGrids(grid_elem):
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
-    dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
+    #print(dataset_interpolated)
+    #print("===========================================================")
+    #print(type(dataset_interpolated))
+    #print(len(dataset_interpolated))
+    #dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
+    #print(dataset_interpolated)
+    #print("***************************************************************************")
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
+                #print("*************")
+                #print(dataset_interpolated[i])
+                #print(len(dataset_interpolated[i]))
                 spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
-                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3),"hour_position":int(i+1)}
+                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,"hour_position":int(i+1)}
                 response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
 
 if __name__ == '__main__':
