@@ -8,7 +8,7 @@ pool_size_historical_interpolate = 8
 last_hours_historical_interpolate = 24
 
 #Global constanst temporal prediction
-time_steps_in = 18
+time_steps_in = 24
 
 k_value=4
 name_column_x = 'lon'
