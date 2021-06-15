@@ -7,10 +7,12 @@ from keras.models import load_model
 import requests
 import datetime
 from global_constants import time_steps_in
+import script_helper as helper
+import json
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
-
+GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
 DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_prediction/'
 STORE_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/store_temporal_prediction/'
 RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
@@ -18,7 +20,7 @@ AVERAGE_VALID_PROCESSED = BASE_URL_QAIRA +'api/average_valid_processed_period/'
 H5_PROD = '/var/www/html/air-application/'
 #H5_PROD = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/'
 # Define Station Parameters:
-qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(43,3),(45,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(54,3)]
+#qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(42,3),(43,3),(44,3),(45,3),(46,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(53,3)]
 #Calculate time now and n_time_steps before.
 CO, NO2, PM25, hum, compid, timestamp, qWid, temp = [], [], [], [], [], [], [], []
 
@@ -115,24 +117,21 @@ def predict_air_quality(data, value_type, model, n_features, n_target_values, n_
 def response_json_predict(send_json, module_id):
     # API-Endpoint
     PARAMS = {"module_id":module_id, "measurement":send_json}
-    #print(PARAMS)
     resp = requests.post(STORE_TEMPORAL_PREDICTION, json=PARAMS)
     return resp.text
-    #return 200
 
 def response_nowtime(last_timestamp):
     # API-Endpoint
     PARAMS = {"model_id":2,"last_running_timestamp":last_timestamp}
-    #print(PARAMS)
     resp = requests.post(RECORD_LAST_TEMPORAL_TIMESTAMP, json=PARAMS)
     return resp.text
-    #return 200
 
-def validNan(value):
+def formatMeasurements(value):
     return None if(math.isnan(value)) else round(value,3)
 
 if __name__ == '__main__':
-    response_delete = requests.post(DELETE_ALL_TEMPORAL_PREDICTION)
+    all_qhawax_station = json.loads(requests.get(GET_UPDATED_QHAWAX).text)
+    qWid_compid = helper.getQhawaxFirstVersion(all_qhawax_station)
 
     time_now = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S") 
     time_nsteps_before = (datetime.datetime.now() - datetime.timedelta(hours=time_steps_in)).strftime("%d-%m-%Y %H:%M:%S")
@@ -173,12 +172,16 @@ if __name__ == '__main__':
         PM25.append(predict_air_quality(data, "PM25", model_PM25, n_features, n_target_values, n_output, time_steps_in, vector_max_PM25, vector_min_PM25))
         qWid.append(qhawax_id)
         compid.append(company_id)
-
+    response_delete = requests.post(DELETE_ALL_TEMPORAL_PREDICTION)
     for i in range(len(qWid)):
         send_json = []
+        timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.timedelta(hours=1)
         for j in range(n_output):
-            hour_station_json = {"CO_ug_m3":validNan(CO[i][j]),"H2S_ug_m3":None,"NO2_ug_m3":validNan(NO2[i][j]),"O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":validNan(PM25[i][j]), "hour_position":(j+1)}
+            hour_station_json = {"CO_ug_m3":formatMeasurements(CO[i][j]),"H2S_ug_m3":None,"NO2_ug_m3":formatMeasurements(NO2[i][j]),
+                                 "O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":formatMeasurements(PM25[i][j]), 
+                                 "hour_position":(j+1),"timestamp":str(timestamp)}
             send_json.append(hour_station_json)
+            timestamp = timestamp + datetime.timedelta(hours=1)
         
         resp_1 = response_json_predict(send_json,qWid[i])
         last_timestamp = str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))

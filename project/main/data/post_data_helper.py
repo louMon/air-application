@@ -1,5 +1,6 @@
 from project.database.models import Traffic, Wind, Senamhi, InterpolatedPollutants, \
-                                    TemporalPollutants,FutureInterpolatedPollutants
+                                    TemporalPollutants,FutureInterpolatedPollutants, \
+                                    TemporalTotalSpatialInterpolation, TotalSpatialInterpolation
 from project import app, db, socketio
 import dateutil.parser
 import dateutil.tz
@@ -51,4 +52,14 @@ def storeFutureSpatialPredictionDB(data_json):
 
 def deleteAllFutureSpatialPredictionInDB():
     session.query(FutureInterpolatedPollutants).filter(FutureInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
+    session.commit()
+
+def storeAllSpatialPredictionDB(data_json):
+    spatial_predict = TotalSpatialInterpolation(**data_json)
+    session.add(spatial_predict)
+    session.commit()
+
+def storeAllTemporalSpatialPredictionDB(data_json):
+    spatial_predict = TemporalTotalSpatialInterpolation(**data_json)
+    session.add(spatial_predict)
     session.commit()

@@ -1,5 +1,6 @@
 from project.database.models import Traffic, Wind, Senamhi, InterpolatedPollutants, GridToPredict,Pollutant,\
-                                    FutureInterpolatedPollutants,TemporalPollutants,EnvironmentalStation
+                                    FutureInterpolatedPollutants,TemporalPollutants,EnvironmentalStation, \
+                                    TotalSpatialInterpolation
 from collections import defaultdict
 from functools import partial
 from project import app, db
@@ -79,13 +80,28 @@ def queryFutureMeasurement(station_id):
     """ Get future measurements of environmental station """
     columns = (TemporalPollutants.hour_position,TemporalPollutants.ug_m3_value, 
                TemporalPollutants.pollutant_id, Pollutant.pollutant_name, 
-               TemporalPollutants.environmental_station_id,
+               TemporalPollutants.environmental_station_id, TemporalPollutants.timestamp,
                EnvironmentalStation.lat, EnvironmentalStation.lon )
     future_measurements = session.query(*columns).\
                                   join(EnvironmentalStation, TemporalPollutants.environmental_station_id == EnvironmentalStation.id). \
                                   join(Pollutant, TemporalPollutants.pollutant_id == Pollutant.id). \
                                   group_by(EnvironmentalStation.id, TemporalPollutants.id, Pollutant.id). \
                                   filter(TemporalPollutants.environmental_station_id == station_id). \
+                                  order_by(TemporalPollutants.hour_position.asc()).all()
+    return [measurement._asdict() for measurement in future_measurements]
+
+def queryFutureMeasurementByPollutant(station_id,pollutant):
+    """ Get future measurements of environmental station filtering by pollutant """
+    columns = (TemporalPollutants.hour_position,TemporalPollutants.ug_m3_value, 
+               TemporalPollutants.pollutant_id, Pollutant.pollutant_name, 
+               TemporalPollutants.environmental_station_id, TemporalPollutants.timestamp,
+               EnvironmentalStation.lat, EnvironmentalStation.lon)
+    future_measurements = session.query(*columns).\
+                                  join(EnvironmentalStation, TemporalPollutants.environmental_station_id == EnvironmentalStation.id). \
+                                  join(Pollutant, TemporalPollutants.pollutant_id == Pollutant.id). \
+                                  group_by(EnvironmentalStation.id, TemporalPollutants.id, Pollutant.id). \
+                                  filter(TemporalPollutants.environmental_station_id == station_id). \
+                                  filter(Pollutant.pollutant_name == pollutant). \
                                   order_by(TemporalPollutants.hour_position.asc()).all()
     return [measurement._asdict() for measurement in future_measurements]
 
@@ -97,10 +113,23 @@ def mergeSameHoursDictionary(predicted_measurements):
       sameHourDictionary["hour_position"] = i+1
       sameHourDictionary["lat"] = predicted_measurements[0]["lat"]
       sameHourDictionary["lon"] = predicted_measurements[0]["lon"]
+      sameHourDictionary["timestamp"] = predicted_measurements[0]["timestamp"]
       for measurement in predicted_measurements:
         if(measurement["hour_position"]==i+1):
           sameHourDictionary[measurement["pollutant_name"]]=measurement["ug_m3_value"]
       all_hours.append(sameHourDictionary)
     return all_hours
 
+def queryTotalSpatialMeasurementByPollutant(pollutant_name):
+    """ The total records of air quality spatial prediction based on IDW models"""
+    columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,TotalSpatialInterpolation.hour_position,
+               TotalSpatialInterpolation.ug_m3_value, TotalSpatialInterpolation.id, TotalSpatialInterpolation.timestamp)
+
+    if(columns!=None):
+      return session.query(*columns).join(GridToPredict, TotalSpatialInterpolation.grid_id == GridToPredict.id). \
+                                     join(Pollutant, TotalSpatialInterpolation.pollutant_id == Pollutant.id). \
+                                     group_by(GridToPredict.id, TotalSpatialInterpolation.id, Pollutant.id). \
+                                     filter(Pollutant.pollutant_name == pollutant_name). \
+                                     order_by(TotalSpatialInterpolation.timestamp.desc()).all()
+    return None
 

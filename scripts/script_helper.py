@@ -15,6 +15,14 @@ def getDetailOfEnvStation(json_all_env_station):
     array_qhawax_location = [ [env_station['lat'],env_station['lon']] for env_station in json_all_env_station if env_station['module_id']!=None and (env_station['module_id']>=37 and env_station['module_id']<=54) ]         
     return array_station_id,array_module_id,array_qhawax_location
 
+def getQhawaxFirstVersion(all_qhawax):
+    qWid_compid = []
+    for qhawax in all_qhawax:
+        if(qhawax["qhawax_id"]>=37):
+            element = (qhawax["qhawax_id"],3)
+            qWid_compid.append(element)
+    return qWid_compid
+
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):
     average_valid_processed_measurement = []
     for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None

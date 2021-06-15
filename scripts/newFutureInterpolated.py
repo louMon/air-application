@@ -11,8 +11,8 @@ from global_constants import pool_size_future_interpolate, last_hours_future_int
 
 BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
-STORE_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_future_spatial_prediction/'
-DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_future_spatial_prediction/'
+STORE_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_all_spatial_prediction/'
+DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
 GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
@@ -46,14 +46,16 @@ def iterateByGrids(grid_elem):
                                                                              index_column_y, \
                                                                              grid_elem['lat'], \
                                                                              grid_elem['lon'])
-    #dataset_interpolated=np.asarray(dataset_interpolated).astype(np.float32)
+    timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.timedelta(hours=1)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
-                future_spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),"ppb_value":None,
-                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,"hour_position":int(i+1)}
+                future_spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),
+                                    "ug_m3_value":round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,
+                                    "hour_position":int(i+25),"timestamp":str(timestamp)}
                 response = requests.post(STORE_FUTURE_SPATIAL_PREDICTION, json=future_spatial_json)
+        timestamp = timestamp + datetime.timedelta(hours=1)
 
 if __name__ == '__main__':
     start_time = datetime.datetime.now()
@@ -61,12 +63,12 @@ if __name__ == '__main__':
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
-    response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
     measurement_list = getListOfMeasurementOfAllModules(array_station_id,array_qhawax_location)
     sort_list_without_json = helper.sortListOfMeasurementPerHourFuture(measurement_list,last_hours_future_interpolate)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
+    response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
     response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     pool = multiprocessing.Pool(pool_size_future_interpolate)
     pool_results = pool.map(iterateByGrids, json_data_grid)

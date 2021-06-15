@@ -15,7 +15,9 @@ def storeTemporalPrediction():
             for pollutant_name,value in array_pollutant.items():
                 pollutant_id = get_business_helper.getPollutantID(value)
                 if(pollutant_id!=None):
-                    new_json = {"pollutant_id":pollutant_id,"environmental_station_id":station_id,"ug_m3_value":measurement[pollutant_name],"hour_position":int(measurement['hour_position'])}
+                    new_json = {"pollutant_id":pollutant_id,"environmental_station_id":station_id,\
+                                "ug_m3_value":measurement[pollutant_name],"hour_position":int(measurement['hour_position']),\
+                                "timestamp":measurement["timestamp"]}
                     post_data_helper.storeTemporalPredictionDB(new_json)
         return make_response('OK', 200)
     except (TypeError,KeyError) as e:
@@ -47,6 +49,23 @@ def getFutureRecordsOfEveryStation():
     try:
         #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
         predicted_measurements = get_data_helper.queryFutureMeasurement(station_id)
+        if(predicted_measurements!=[]):
+            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements)
+            if(merged_predicted_measurements!=[]):
+                return make_response(jsonify(merged_predicted_measurements), 200)
+        return make_response('There is no future records yet', 404)
+    except Exception as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
+@app.route('/api/get_forecasting_by_pollutant_of_one_station/', methods=['GET'])
+def getFutureRecordsOfEveryStationByPollutant():
+    """ Get future records to interpolate spatially in future (6h)"""
+    station_id = int(request.args.get('environmental_station_id'))
+    pollutant = str(request.args.get('pollutant'))
+    try:
+        #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
+        predicted_measurements = get_data_helper.queryFutureMeasurementByPollutant(station_id,pollutant)
         if(predicted_measurements!=[]):
             merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements)
             if(merged_predicted_measurements!=[]):
