@@ -19,8 +19,7 @@ RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
 AVERAGE_VALID_PROCESSED = BASE_URL_QAIRA +'api/average_valid_processed_period/'
 H5_PROD = '/var/www/html/air-application/'
 #H5_PROD = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/'
-# Define Station Parameters:
-#qWid_compid = [(37,3),(38,3),(39,3),(40,3),(41,3),(42,3),(43,3),(44,3),(45,3),(46,3),(47,3),(48,3),(49,3),(50,3),(51,3),(52,3),(53,3)]
+
 #Calculate time now and n_time_steps before.
 CO, NO2, PM25, hum, compid, timestamp, qWid, temp = [], [], [], [], [], [], [], []
 

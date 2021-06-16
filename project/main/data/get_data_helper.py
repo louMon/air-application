@@ -11,11 +11,11 @@ def queryLastPredictedSpatialMeasurement(pollutant_name,last_hours,pollutant_uni
     """ The last historical records of air quality spatial prediction (last 6h, 12h, 24h) based on IDW models"""
     columns = None
     if (pollutant_unit=='ppb'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,InterpolatedPollutants.hour_position,
-                   InterpolatedPollutants.ppb_value, InterpolatedPollutants.id)
+    	columns = (GridToPredict.lat, GridToPredict.lon, InterpolatedPollutants.hour_position,
+                   InterpolatedPollutants.ppb_value)
     elif(pollutant_unit=='ugm3'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,InterpolatedPollutants.hour_position,
-    			   InterpolatedPollutants.ug_m3_value, InterpolatedPollutants.id)
+    	columns = (GridToPredict.lat, GridToPredict.lon, InterpolatedPollutants.hour_position,
+    			   InterpolatedPollutants.ug_m3_value)
 
     if(columns!=None):
     	return session.query(*columns).join(GridToPredict, InterpolatedPollutants.grid_id == GridToPredict.id). \
@@ -30,11 +30,11 @@ def queryLastFutureRecordsOfSpatialMeasurement(pollutant_name,last_hours,polluta
     """ The last future records of air quality spatial prediction (next 6h) based on IDW models"""
     columns = None
     if (pollutant_unit=='ppb'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,FutureInterpolatedPollutants.hour_position,
-                   FutureInterpolatedPollutants.ppb_value, FutureInterpolatedPollutants.id)
+    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
+                   FutureInterpolatedPollutants.ppb_value)
     elif(pollutant_unit=='ugm3'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,FutureInterpolatedPollutants.hour_position,
-    			      FutureInterpolatedPollutants.ug_m3_value, FutureInterpolatedPollutants.id)
+    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
+    			      FutureInterpolatedPollutants.ug_m3_value)
 
     if(columns!=None):
     	return session.query(*columns).join(GridToPredict, FutureInterpolatedPollutants.grid_id == GridToPredict.id). \
@@ -50,10 +50,10 @@ def queryLastPredictedTemporalMeasurement(pollutant_name,last_hours,pollutant_un
     columns = None
     if (pollutant_unit=='ppb'):
         columns = (EnvironmentalStation.lat, EnvironmentalStation.lon, TemporalPollutants.hour_position,
-                   TemporalPollutants.ppb_value, TemporalPollutants.id)
+                   TemporalPollutants.ppb_value)
     elif(pollutant_unit=='ugm3'):
         columns = (EnvironmentalStation.lat, EnvironmentalStation.lon, TemporalPollutants.hour_position,
-                   TemporalPollutants.ug_m3_value, TemporalPollutants.id)
+                   TemporalPollutants.ug_m3_value)
 
     if(columns!=None):
         return session.query(*columns).join(EnvironmentalStation, TemporalPollutants.environmental_station_id == EnvironmentalStation.id). \
@@ -122,8 +122,8 @@ def mergeSameHoursDictionary(predicted_measurements):
 
 def queryTotalSpatialMeasurementByPollutant(pollutant_name):
     """ The total records of air quality spatial prediction based on IDW models"""
-    columns = (GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax,TotalSpatialInterpolation.hour_position,
-               TotalSpatialInterpolation.ug_m3_value, TotalSpatialInterpolation.id, TotalSpatialInterpolation.timestamp)
+    columns = (GridToPredict.lat, GridToPredict.lon, TotalSpatialInterpolation.hour_position,
+               TotalSpatialInterpolation.ug_m3_value, TotalSpatialInterpolation.timestamp)
 
     if(columns!=None):
       return session.query(*columns).join(GridToPredict, TotalSpatialInterpolation.grid_id == GridToPredict.id). \
@@ -132,4 +132,19 @@ def queryTotalSpatialMeasurementByPollutant(pollutant_name):
                                      filter(Pollutant.pollutant_name == pollutant_name). \
                                      order_by(TotalSpatialInterpolation.timestamp.desc()).all()
     return None
+
+def setAverageValuesByHour(predicted_measurements):
+    new_predicted_measurements = []
+    for hour_element in predicted_measurements:
+      if all([value is None for value in hour_element["ug_m3_value"]])==False :
+        hour_element["max"] = max(hour_element["ug_m3_value"])
+        hour_element["min"] = min(hour_element["ug_m3_value"])
+      else:
+        hour_element["max"] = None
+        hour_element["min"] = None
+      hour_element["timestamp"] = hour_element["timestamp"][0]
+      new_predicted_measurements.append(hour_element)
+    return new_predicted_measurements
+
+
 

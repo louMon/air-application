@@ -35,6 +35,7 @@ def getTotalSpatialPrediction():
         if(predicted_measurements!=None):
             predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
             predicted_measurements = get_data_helper.mergeSameHourPosition(predicted_measurements)
+            predicted_measurements = get_data_helper.setAverageValuesByHour(predicted_measurements)
             return make_response(jsonify(predicted_measurements), 200)
         return make_response('Pollutant Unit is not in the right way', 404)
     except Exception as e:

@@ -13,7 +13,6 @@ BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 STORE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/store_all_spatial_prediction/'
-DELETE_ALL_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
@@ -35,11 +34,12 @@ def getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location):
     for i in range(len(array_module_id)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(array_module_id[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
-        hourly_processed_measurements = response.json()
-        if len(hourly_processed_measurements) < last_hours_historical_interpolate/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
-            continue
-        hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
-        list_of_hours.append(hourly_processed_measurements)
+        if(response.text ==200):
+            hourly_processed_measurements = response.json()
+            if len(hourly_processed_measurements) < last_hours_historical_interpolate/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
+                continue
+            hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
+            list_of_hours.append(hourly_processed_measurements)
     return list_of_hours
 
 def iterateByGrids(grid_elem):
@@ -68,7 +68,6 @@ if __name__ == '__main__':
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
-    #response_delete = requests.post(DELETE_ALL_SPATIAL_PREDICTION)
     measurement_list = getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location)
     sort_list_without_json = helper.sortListOfMeasurementPerHourHistorical(measurement_list,last_hours_historical_interpolate)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
