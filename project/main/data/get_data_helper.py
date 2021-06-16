@@ -136,12 +136,12 @@ def queryTotalSpatialMeasurementByPollutant(pollutant_name):
 def setAverageValuesByHour(predicted_measurements):
     new_predicted_measurements = []
     for hour_element in predicted_measurements:
-      if all([value is None for value in hour_element["ug_m3_value"]])==False :
+      hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(measurement!=None) ]
+      hour_element["max"] = None
+      hour_element["min"] = None
+      if(len(hour_element["ug_m3_value"])>0):
         hour_element["max"] = max(hour_element["ug_m3_value"])
         hour_element["min"] = min(hour_element["ug_m3_value"])
-      else:
-        hour_element["max"] = None
-        hour_element["min"] = None
       hour_element["timestamp"] = hour_element["timestamp"][0]
       new_predicted_measurements.append(hour_element)
     return new_predicted_measurements
