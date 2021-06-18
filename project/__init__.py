@@ -14,7 +14,7 @@ db = SQLAlchemy(app)
 
 from project.main.business import environmental_station,grid_to_predict, pollutant,prediction_configure
 from project.main.data import traffic, wind, senahmi, spatial_prediction, \
-							  future_spatial_prediction, temporal_prediction, total_spatial_prediction
+							  temporal_prediction, total_spatial_prediction
 import project.database.models as models
 from project.database.models import EnvironmentalStation,Pollutant, GridToPredict, PredictionConfigure,\
 									InterpolatedPollutants, TemporalPollutants, FutureInterpolatedPollutants,\

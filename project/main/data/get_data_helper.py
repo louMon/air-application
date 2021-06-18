@@ -26,24 +26,24 @@ def queryLastPredictedSpatialMeasurement(pollutant_name,last_hours,pollutant_uni
 	                                   order_by(InterpolatedPollutants.hour_position.desc()).all()
     return None
 
-def queryLastFutureRecordsOfSpatialMeasurement(pollutant_name,last_hours,pollutant_unit):
-    """ The last future records of air quality spatial prediction (next 6h) based on IDW models"""
-    columns = None
-    if (pollutant_unit=='ppb'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
-                   FutureInterpolatedPollutants.ppb_value)
-    elif(pollutant_unit=='ugm3'):
-    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
-    			      FutureInterpolatedPollutants.ug_m3_value)
+#def queryLastFutureRecordsOfSpatialMeasurement(pollutant_name,last_hours,pollutant_unit):
+#    """ The last future records of air quality spatial prediction (next 6h) based on IDW models"""
+#    columns = None
+#    if (pollutant_unit=='ppb'):
+#    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
+#                   FutureInterpolatedPollutants.ppb_value)
+#    elif(pollutant_unit=='ugm3'):
+#    	columns = (GridToPredict.lat, GridToPredict.lon, FutureInterpolatedPollutants.hour_position,
+#    			      FutureInterpolatedPollutants.ug_m3_value)
 
-    if(columns!=None):
-    	return session.query(*columns).join(GridToPredict, FutureInterpolatedPollutants.grid_id == GridToPredict.id). \
-	    							                 join(Pollutant, FutureInterpolatedPollutants.pollutant_id == Pollutant.id). \
-	                                   group_by(GridToPredict.id, FutureInterpolatedPollutants.id, Pollutant.id). \
-	                                   filter(Pollutant.pollutant_name == pollutant_name). \
-	                                   filter(FutureInterpolatedPollutants.hour_position < last_hours). \
-	                                   order_by(FutureInterpolatedPollutants.hour_position.asc()).all()
-    return None
+#    if(columns!=None):
+#    	return session.query(*columns).join(GridToPredict, FutureInterpolatedPollutants.grid_id == GridToPredict.id). \
+#	    							                 join(Pollutant, FutureInterpolatedPollutants.pollutant_id == Pollutant.id). \
+#	                                   group_by(GridToPredict.id, FutureInterpolatedPollutants.id, Pollutant.id). \
+#	                                   filter(Pollutant.pollutant_name == pollutant_name). \
+#	                                   filter(FutureInterpolatedPollutants.hour_position < last_hours). \
+#	                                   order_by(FutureInterpolatedPollutants.hour_position.asc()).all()
+#   return None
 
 def queryLastPredictedTemporalMeasurement(pollutant_name,last_hours,pollutant_unit):
     """ The next 6 air quality records of every environmental station based on temporal series models"""

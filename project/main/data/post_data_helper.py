@@ -1,6 +1,6 @@
 from project.database.models import Traffic, Wind, Senamhi, InterpolatedPollutants, \
                                     TemporalPollutants,FutureInterpolatedPollutants, \
-                                    TemporalTotalSpatialInterpolation, TotalSpatialInterpolation
+                                    TotalSpatialInterpolation
 from project import app, db, socketio
 import dateutil.parser
 import dateutil.tz
@@ -45,22 +45,17 @@ def deleteAllTemporalPredictionInDB():
     session.query(TemporalPollutants).filter(TemporalPollutants.environmental_station_id >= 1).delete(synchronize_session=False)
     session.commit()
 
-def storeFutureSpatialPredictionDB(data_json):
-    future_spatial_predict = FutureInterpolatedPollutants(**data_json)
-    session.add(future_spatial_predict)
-    session.commit()
+#def storeFutureSpatialPredictionDB(data_json):
+#    future_spatial_predict = FutureInterpolatedPollutants(**data_json)
+#    session.add(future_spatial_predict)
+#    session.commit()
 
-def deleteAllFutureSpatialPredictionInDB():
-    session.query(FutureInterpolatedPollutants).filter(FutureInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
-    session.commit()
+#def deleteAllFutureSpatialPredictionInDB():
+#    session.query(FutureInterpolatedPollutants).filter(FutureInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
+#    session.commit()
 
 def storeAllSpatialPredictionDB(data_json):
     spatial_predict = TotalSpatialInterpolation(**data_json)
-    session.add(spatial_predict)
-    session.commit()
-
-def storeAllTemporalSpatialPredictionDB(data_json):
-    spatial_predict = TemporalTotalSpatialInterpolation(**data_json)
     session.add(spatial_predict)
     session.commit()
 
