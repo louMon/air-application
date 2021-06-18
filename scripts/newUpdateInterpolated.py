@@ -2,9 +2,12 @@ import requests
 import datetime
 import dateutil.tz
 import json
+import csv
 import time
+import os
 import multiprocessing
 import numpy as np
+import pandas as pd
 import script_helper as helper
 from global_constants import pool_size_historical_interpolate, last_hours_historical_interpolate,\
                              name_column_x, name_column_y, dictionary_of_var_index_prediction,k_value
@@ -17,6 +20,10 @@ UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
+DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
+
+#FILE_ADDRESS = '/var/www/html/air-application/'
+FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/historical_measurements.csv'
 
 #Global variables
 index_column_x = None
@@ -34,12 +41,11 @@ def getListOfMeasurementOfAllModules(array_module_id,array_qhawax_location):
     for i in range(len(array_module_id)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(array_module_id[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
-        if(response.text ==200):
-            hourly_processed_measurements = response.json()
-            if len(hourly_processed_measurements) < last_hours_historical_interpolate/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
-                continue
-            hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
-            list_of_hours.append(hourly_processed_measurements)
+        hourly_processed_measurements = response.json()
+        if len(hourly_processed_measurements) < last_hours_historical_interpolate/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
+            continue
+        hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
+        list_of_hours.append(hourly_processed_measurements)
     return list_of_hours
 
 def iterateByGrids(grid_elem):
@@ -55,15 +61,16 @@ def iterateByGrids(grid_elem):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
-
-                spatial_json={"pollutant_id":int(pollutant_id),"grid_id":int(grid_elem["id"]),
-                              "ug_m3_value":round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,
-                              "hour_position":int(i+1), "timestamp":str(timestamp)}
-                response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+                with open(FILE_ADDRESS, 'a', newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerow([int(pollutant_id), int(grid_elem["id"]), round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,int(i+1),str(timestamp)])
         timestamp = timestamp + datetime.timedelta(hours=1)
 
+def saveMeasurement(row):
+    spatial_json={"pollutant_id":row[0],"grid_id":row[1],"ug_m3_value":None if(row[2]=='') else row[2],"hour_position":row[3],"timestamp":row[4]}
+    response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+
 if __name__ == '__main__':
-    start_time = datetime.datetime.now()
     json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
@@ -73,10 +80,29 @@ if __name__ == '__main__':
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
+    
     pool = multiprocessing.Pool(pool_size_historical_interpolate)
     pool_results = pool.map(iterateByGrids, json_data_grid)
     pool.close()
     pool.join()
-    print("Empezo a las {a} y termino a las {b}".format(a=start_time,b=datetime.datetime.now()))
+    
+    start_time = datetime.datetime.now()
+    #Borrado de datos de la tabla temporal
+    response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
+    with open(FILE_ADDRESS) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        pool = multiprocessing.Pool(pool_size_historical_interpolate)
+        pool_results = pool.map(saveMeasurement, csv_reader)
+        pool.close()
+        pool.join()
+        #for row in csv_reader:
+        #    spatial_json={"pollutant_id":row[0],"grid_id":row[1],"ug_m3_value":None if(row[2]=='') else row[2],"hour_position":row[3],"timestamp":row[4]}
+        #    response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+            
+    os.remove(FILE_ADDRESS)
+    print("File Removed!")
+    print("Luego de terminar los calculos {a} y luego de leer cada json {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")
+    #Registro de datos en la tabla temporal
+

@@ -29,7 +29,6 @@ def storeGridToPredict():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-
 @app.route('/api/delete_all_grids/', methods=['POST'])
 def deleteAllGrids():
     """ Grid function to delete grid to predict """

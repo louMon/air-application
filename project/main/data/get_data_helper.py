@@ -143,6 +143,7 @@ def setAverageValuesByHour(predicted_measurements):
         hour_element["max"] = max(hour_element["ug_m3_value"])
         hour_element["min"] = min(hour_element["ug_m3_value"])
       hour_element["timestamp"] = hour_element["timestamp"][0]
+      hour_element["hour_position"] = hour_element["hour_position"][0]
       new_predicted_measurements.append(hour_element)
     return new_predicted_measurements
 

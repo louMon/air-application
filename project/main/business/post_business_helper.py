@@ -1,6 +1,6 @@
 from project.database.models import EnvironmentalStation, GridToPredict,\
 									InterpolatedPollutants, PredictionConfigure,\
-									FutureInterpolatedPollutants
+									FutureInterpolatedPollutants,TotalSpatialInterpolation
 from project import app, db
 
 session = db.session
@@ -20,10 +20,12 @@ def deleteGridToPredictInDB():
 	session.commit()
 	session.query(FutureInterpolatedPollutants).filter(FutureInterpolatedPollutants.grid_id >= 1).delete(synchronize_session=False)
 	session.commit()
+	session.query(TotalSpatialInterpolation).filter(TotalSpatialInterpolation.grid_id >= 1).delete(synchronize_session=False)
+	session.commit()
 	session.query(GridToPredict).filter(GridToPredict.id >= 1).delete(synchronize_session=False)
 	session.commit()
 
 def updateTimestampRunning(json):
-    session.query(PredictionConfigure). \
-            filter_by(id=json["model_id"]).update(values={"last_running_timestamp":json["last_running_timestamp"]})
-    session.commit()
+	session.query(PredictionConfigure). \
+			filter_by(id=json["model_id"]).update(values={"last_running_timestamp":json["last_running_timestamp"]})
+	session.commit()
