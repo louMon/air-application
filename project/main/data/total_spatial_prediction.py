@@ -14,17 +14,6 @@ def storeAllSpatialPrediction():
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)
 
-@app.route('/api/store_all_temporal_spatial_prediction/', methods=['POST'])
-def storeAllTemporalSpatialPrediction():
-    """  Spatial Prediction function to record all temporal interpolation """
-    try:
-        data_json = request.get_json()
-        post_data_helper.storeAllTemporalSpatialPredictionDB(data_json)
-        return make_response('OK', 200)
-    except TypeError as e:
-        json_message = jsonify({'error': '\'%s\'' % (e)})
-        return make_response(json_message, 400)
-
 @app.route('/api/get_total_spatial_interpolation/', methods=['GET'])
 def getTotalSpatialPrediction():
     """ Get station - Input Id of station """
@@ -39,5 +28,15 @@ def getTotalSpatialPrediction():
             return make_response(jsonify(predicted_measurements), 200)
         return make_response('Pollutant Unit is not in the right way', 404)
     except Exception as e:
+        json_message = jsonify({'error': '\'%s\'' % (e)})
+        return make_response(json_message, 400)
+
+@app.route('/api/delete_total_spatial_prediction/', methods=['POST'])
+def deleteTotalSpatialPrediction():
+    """ Endpoint to delete all interpolated historical records """
+    try:
+        post_data_helper.deleteTotalSpatialPredictionInDB()
+        return make_response('Spatial Prediction value has been deleted', 200)
+    except TypeError as e:
         json_message = jsonify({'error': '\'%s\'' % (e)})
         return make_response(json_message, 400)

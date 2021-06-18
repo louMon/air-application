@@ -63,3 +63,7 @@ def storeAllTemporalSpatialPredictionDB(data_json):
     spatial_predict = TemporalTotalSpatialInterpolation(**data_json)
     session.add(spatial_predict)
     session.commit()
+
+def deleteTotalSpatialPredictionInDB():
+    session.query(TotalSpatialInterpolation).filter(TotalSpatialInterpolation.grid_id >= 1).delete(synchronize_session=False)
+    session.commit()

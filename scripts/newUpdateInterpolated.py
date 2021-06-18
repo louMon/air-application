@@ -20,10 +20,10 @@ UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
-DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_all_spatial_prediction/'
+DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_total_spatial_prediction/'
 
-#FILE_ADDRESS = '/var/www/html/air-application/'
-FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/historical_measurements.csv'
+FILE_ADDRESS = '/var/www/html/air-application/historical_measurements.csv'
+#FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/historical_measurements.csv'
 
 #Global variables
 index_column_x = None
@@ -96,9 +96,6 @@ if __name__ == '__main__':
         pool_results = pool.map(saveMeasurement, csv_reader)
         pool.close()
         pool.join()
-        #for row in csv_reader:
-        #    spatial_json={"pollutant_id":row[0],"grid_id":row[1],"ug_m3_value":None if(row[2]=='') else row[2],"hour_position":row[3],"timestamp":row[4]}
-        #    response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
             
     os.remove(FILE_ADDRESS)
     print("File Removed!")
