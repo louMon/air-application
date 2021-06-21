@@ -22,7 +22,7 @@ def getTotalSpatialPrediction():
         #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
         predicted_measurements = get_data_helper.queryTotalSpatialMeasurementByPollutant(pollutant_name)
         if(predicted_measurements!=None):
-            predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
+            #predicted_measurements = [measurement._asdict() for measurement in predicted_measurements]
             predicted_measurements = get_data_helper.mergeSameHourPosition(predicted_measurements)
             predicted_measurements = get_data_helper.setAverageValuesByHour(predicted_measurements)
             return make_response(jsonify(predicted_measurements), 200)

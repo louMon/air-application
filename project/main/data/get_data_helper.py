@@ -1,11 +1,19 @@
 from project.database.models import Traffic, Wind, Senamhi, InterpolatedPollutants, GridToPredict,Pollutant,\
                                     FutureInterpolatedPollutants,TemporalPollutants,EnvironmentalStation, \
                                     TotalSpatialInterpolation
+import project.main.business.get_business_helper as get_business_helper
 from collections import defaultdict
 from functools import partial
 from project import app, db
+import numpy as np
+import csv
 
 session = db.session
+
+#TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
+#ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
+TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
+ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
 
 def queryLastPredictedSpatialMeasurement(pollutant_name,last_hours,pollutant_unit):
     """ The last historical records of air quality spatial prediction (last 6h, 12h, 24h) based on IDW models"""
@@ -65,15 +73,19 @@ def queryLastPredictedTemporalMeasurement(pollutant_name,last_hours,pollutant_un
     return None
 
 def mergeSameHourPosition(records):
+    print("llegue a mergeSameHourPosition")
     id2record = defaultdict(partial(defaultdict, list))
+    print(id2record)
     for record in records:
       merged_record = id2record[record['hour_position']]
+      #print(merged_record)
       for key, value in record.items():
         merged_record[key].append(value)
 
     result = list()
     for record in id2record.items():
       result.append(dict(record[1]))
+    print("Termine con mergeSameHourPosition")
     return result
 
 def queryFutureMeasurement(station_id):
@@ -122,26 +134,29 @@ def mergeSameHoursDictionary(predicted_measurements):
 
 def queryTotalSpatialMeasurementByPollutant(pollutant_name):
     """ The total records of air quality spatial prediction based on IDW models"""
-    columns = (GridToPredict.lat, GridToPredict.lon, TotalSpatialInterpolation.hour_position,
-               TotalSpatialInterpolation.ug_m3_value, TotalSpatialInterpolation.timestamp)
-
-    if(columns!=None):
-      return session.query(*columns).join(GridToPredict, TotalSpatialInterpolation.grid_id == GridToPredict.id). \
-                                     join(Pollutant, TotalSpatialInterpolation.pollutant_id == Pollutant.id). \
-                                     group_by(GridToPredict.id, TotalSpatialInterpolation.id, Pollutant.id). \
-                                     filter(Pollutant.pollutant_name == pollutant_name). \
-                                     order_by(TotalSpatialInterpolation.timestamp.desc()).all()
-    return None
+    spatial_measurement = []
+    with open(ORIGINAL_FILE_ADDRESS) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        for row in csv_reader:
+          lat,lon = get_business_helper.getGridPosition(int(row[1]))
+          print(lat, lon)
+          spatial_json={"pollutant_id":int(row[0]),"lat":lat,"lon":lon,"ug_m3_value":None if(row[2]=='') else float(row[2]),"hour_position":int(row[3]),"timestamp":row[4]}
+          spatial_measurement.append(spatial_json)
+    return spatial_measurement 
 
 def setAverageValuesByHour(predicted_measurements):
     new_predicted_measurements = []
+    ug_m3_measurement = []
     for hour_element in predicted_measurements:
       hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(measurement!=None) ]
-      hour_element["max"] = None
-      hour_element["min"] = None
-      if(len(hour_element["ug_m3_value"])>0):
-        hour_element["max"] = max(hour_element["ug_m3_value"])
-        hour_element["min"] = min(hour_element["ug_m3_value"])
+      arr_ug_m3_value = np.array(hour_element["ug_m3_value"])
+      ug_m3_measurement = np.append(ug_m3_measurement, arr_ug_m3_value)
+    max_measurement_by_pollutant = np.max(ug_m3_measurement)
+    min_measurement_by_pollutant = np.min(ug_m3_measurement)
+    for hour_element in predicted_measurements:
+      hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(measurement!=None) ]
+      hour_element["max"] = max_measurement_by_pollutant
+      hour_element["min"] = min_measurement_by_pollutant
       hour_element["timestamp"] = hour_element["timestamp"][0]
       hour_element["hour_position"] = hour_element["hour_position"][0]
       new_predicted_measurements.append(hour_element)

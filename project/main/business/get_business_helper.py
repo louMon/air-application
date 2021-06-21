@@ -27,6 +27,12 @@ def queryGetGridToPredict():
     columns = (GridToPredict.id, GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax)
     return session.query(*columns).order_by(GridToPredict.id.desc()).all()
 
+def getGridPosition(grid_id):
+    """ Helper Eca Noise function to list all zones - No parameters required """
+    columns = (GridToPredict.lat, GridToPredict.lon)
+    position = session.query(*columns).filter_by(id=grid_id).one()
+    return position[0][0],position[0][1]
+
 def queryCountOfGridPredict():
     """ Helper Eca Noise function to list all zones - No parameters required """
     columns = (GridToPredict.id)

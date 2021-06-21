@@ -22,8 +22,10 @@ GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 DELETE_ALL_FUTURE_SPATIAL_PREDICTION = BASE_URL_IA + 'api/delete_total_spatial_prediction/'
 
-FILE_ADDRESS = '/var/www/html/air-application/historical_measurements.csv'
-#FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/historical_measurements.csv'
+#TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
+#ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
+TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
+ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
 
 #Global variables
 index_column_x = None
@@ -61,14 +63,17 @@ def iterateByGrids(grid_elem):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)
             if(pollutant_id!=None):
-                with open(FILE_ADDRESS, 'a', newline='') as file:
+                with open(TEMPORAL_FILE_ADDRESS, 'a', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerow([int(pollutant_id), int(grid_elem["id"]), round(float(dataset_interpolated[i][value]),3) if(len(dataset_interpolated[i])>0) else None,int(i+1),str(timestamp)])
         timestamp = timestamp + datetime.timedelta(hours=1)
 
 def saveMeasurement(row):
-    spatial_json={"pollutant_id":row[0],"grid_id":row[1],"ug_m3_value":None if(row[2]=='') else row[2],"hour_position":row[3],"timestamp":row[4]}
-    response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+    #spatial_json={"pollutant_id":row[0],"grid_id":row[1],"ug_m3_value":None if(row[2]=='') else row[2],"hour_position":row[3],"timestamp":row[4]}
+    #response = requests.post(STORE_SPATIAL_PREDICTION, json=spatial_json)
+    with open(ORIGINAL_FILE_ADDRESS, 'a', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow([int(row[0]), int(row[1]), None if(row[2]=='') else row[2],row[3],row[4]])
 
 if __name__ == '__main__':
     json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
@@ -87,17 +92,20 @@ if __name__ == '__main__':
     pool.join()
     
     start_time = datetime.datetime.now()
-    #Borrado de datos de la tabla temporal
-    response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
+    #Borrado de datos de la tabla original
+    if(os.path.isfile(ORIGINAL_FILE_ADDRESS)):
+        print("Remuevo")
+        os.remove(ORIGINAL_FILE_ADDRESS)
+    #response_delete = requests.post(DELETE_ALL_FUTURE_SPATIAL_PREDICTION)
     response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
-    with open(FILE_ADDRESS) as csv_file:
+    with open(TEMPORAL_FILE_ADDRESS) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         pool = multiprocessing.Pool(pool_size_historical_interpolate)
         pool_results = pool.map(saveMeasurement, csv_reader)
         pool.close()
         pool.join()
-            
-    os.remove(FILE_ADDRESS)
+    #Borrado de datos de la tabla temporal       
+    os.remove(TEMPORAL_FILE_ADDRESS)
     print("File Removed!")
     print("Luego de terminar los calculos {a} y luego de leer cada json {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")
