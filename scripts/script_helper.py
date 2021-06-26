@@ -27,6 +27,7 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_lo
     average_valid_processed_measurement = []
     for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
         if(sensor_name in pollutant_array_json):
+            #Consolido todas las mediciones de esta estacion de las 24 horas
             sensor_values = [measurement[sensor_name] if(sensor_name in measurement) else None for measurement in valid_processed_measurements]
             if(None in sensor_values) and not all([value is None for value in sensor_values]):
                 df_sensor =pd.DataFrame(sensor_values)
@@ -73,6 +74,8 @@ def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
                         measurement_list[index_station].insert(0, {})
         pivot_initial = pivot_initial + datetime.timedelta(hours=1)
         new_hour_list = []
+        print("Impriendo hour list")
+        print(len(hour_list))
         for index_new_hour in range(len(hour_list)):
             flag=False
             for index_new_station in range(len(hour_list[index_new_hour])):
@@ -82,6 +85,8 @@ def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
             if(flag==False and len(hour_list[index_new_hour])>0):
                 new_hour_list.append(hour_list[index_new_hour])
         new_hour_list = np.array(new_hour_list)
+        print(new_hour_list)
+        print("\n")
         sort_list_by_hour.append(new_hour_list)
     return sort_list_by_hour
 
@@ -201,6 +206,7 @@ def getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column
     if(type(spatial_interpolation_dataset) is list):
         spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
     predicted_values = []
+    #print(len(spatial_interpolation_dataset))
     if(len(spatial_interpolation_dataset)>0):
         spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
         spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]

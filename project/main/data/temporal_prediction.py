@@ -50,7 +50,7 @@ def getFutureRecordsOfEveryStation():
         #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
         predicted_measurements = get_data_helper.queryFutureMeasurement(station_id)
         if(predicted_measurements!=[]):
-            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements)
+            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements,6)
             if(merged_predicted_measurements!=[]):
                 return make_response(jsonify(merged_predicted_measurements), 200)
         return make_response('There is no future records yet', 404)
@@ -64,10 +64,15 @@ def getFutureRecordsOfEveryStationByPollutant():
     station_id = int(request.args.get('environmental_station_id'))
     pollutant = str(request.args.get('pollutant'))
     try:
-        #Aqui entraria la validacion de a partir de cierta hora ya apuntara a la otra tabla
+        #Las siguientes seis horas predichas
         predicted_measurements = get_data_helper.queryFutureMeasurementByPollutant(station_id,pollutant)
+        #Las 18 horas anteriores reales de las estaciones
+        historical_measurements = get_data_helper.queryHistoricalMeasurement(station_id, pollutant)
+        #Concatenando las mediciones de las 24 horas
+        predicted_measurements.extend(historical_measurements)
+        predicted_measurements.sort(key = lambda x:x["hour_position"])
         if(predicted_measurements!=[]):
-            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements)
+            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements,24)
             if(merged_predicted_measurements!=[]):
                 return make_response(jsonify(merged_predicted_measurements), 200)
         return make_response('There is no future records yet', 404)

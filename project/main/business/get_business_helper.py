@@ -22,6 +22,10 @@ def queryGetActivePollutants():
     columns = (Pollutant.id, Pollutant.pollutant_name, Pollutant.type)
     return session.query(*columns).filter_by(status=True).order_by(Pollutant.id.desc()).all()
 
+def queryGetPollutantID(pollutant_name):
+    """ Helper Eca Noise function to list all zones - No parameters required """
+    return session.query(Pollutant.id).filter_by(pollutant_name=pollutant_name).all()[0][0]
+
 def queryGetGridToPredict():
     """ Helper Eca Noise function to list all zones - No parameters required """
     columns = (GridToPredict.id, GridToPredict.lat, GridToPredict.lon, GridToPredict.has_qhawax)
@@ -71,3 +75,12 @@ def getStationDetail(module_id):
     fields = (EnvironmentalStation.id, EnvironmentalStation.lat, EnvironmentalStation.lon, EnvironmentalStation.module_id,\
               EnvironmentalStation.address, EnvironmentalStation.comercial_name, EnvironmentalStation.district)
     return session.query(*fields).filter_by(module_id=module_id).order_by(EnvironmentalStation.id.desc()).first()
+
+def getQhawaxID(station_id):
+    """ Helper Environamental function to get environmental ID """
+    return session.query(EnvironmentalStation.module_id).filter_by(id=station_id).order_by(EnvironmentalStation.id.desc()).first()[0]
+
+def getQhawaxLocation(station_id):
+    """ Helper Environamental function to get environmental ID """
+    fields = (EnvironmentalStation.lat, EnvironmentalStation.lon)
+    return session.query(*fields).filter_by(id=station_id).order_by(EnvironmentalStation.id.desc()).first()
