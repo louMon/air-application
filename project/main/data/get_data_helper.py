@@ -83,7 +83,14 @@ def queryFutureMeasurementByPollutant(station_id,pollutant):
       measurement['qhawax'] = 1
     return arr_measurement
 
-def mergeSameHoursDictionary(predicted_measurements,total_hours):
+def utilMeasurementTag(sameHourDictionary, measurement,flag):
+    sameHourDictionary[measurement["pollutant_name"]]=measurement["ug_m3_value"]
+    if(flag == "web"):
+      sameHourDictionary["ug_m3_value"]=measurement["ug_m3_value"]
+    return sameHourDictionary
+
+
+def mergeSameHoursDictionary(predicted_measurements,total_hours,flag_web):
     #total_hours = 6
     all_hours = []
     for i in range(total_hours):
@@ -95,7 +102,8 @@ def mergeSameHoursDictionary(predicted_measurements,total_hours):
       sameHourDictionary["timestamp"] = predicted_measurements[i]["timestamp"]
       for measurement in predicted_measurements:
         if(measurement["hour_position"]==i+1):
-          sameHourDictionary[measurement["pollutant_name"]]=measurement["ug_m3_value"]
+          #sameHourDictionary[measurement["pollutant_name"]]=measurement["ug_m3_value"]
+          sameHourDictionary = utilMeasurementTag(sameHourDictionary, measurement,flag_web)
       all_hours.append(sameHourDictionary)
     return all_hours
 
@@ -147,12 +155,12 @@ def queryHistoricalMeasurement(station_id, pollutant):
     hour_count = 1
     for measurement in measurements_by_station:
       for key,value in measurement.items():
-        if(key == pollutant +'_ug_m3'):
+        if(key == pollutant +'_ug_m3' or key == pollutant):
+          '''Entre porque pollutant es igual NO2_ugm3, CO_ug_m3, PM25 '''
           historical_json = {'hour_position': hour_count, 'ug_m3_value': value, \
                              'pollutant_id': pollutant_id, 'pollutant_name': pollutant, \
                              'environmental_station_id': station_id, 'timestamp': measurement['timestamp_zone'], \
                              'lat': lat, 'lon': lon,'qhawax':0}
           historical_array.append(historical_json)
           hour_count+=1
-
     return historical_array

@@ -25,23 +25,27 @@ def getQhawaxFirstVersion(all_qhawax):
 
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):
     average_valid_processed_measurement = []
-    for sensor_name in valid_processed_measurements[0]: #Recorro por contaminante para verificar None
+    '''Recorro por contaminante para verificar None'''
+    for sensor_name in valid_processed_measurements[0]: 
         if(sensor_name in pollutant_array_json):
-            #Consolido todas las mediciones de esta estacion de las 24 horas
+            '''Consolido todas las mediciones de esta estacion de las 24 horas'''
             sensor_values = [measurement[sensor_name] if(sensor_name in measurement) else None for measurement in valid_processed_measurements]
             if(None in sensor_values) and not all([value is None for value in sensor_values]):
                 df_sensor =pd.DataFrame(sensor_values)
                 df_sensor = df_sensor.interpolate(method="linear",limit=4,limit_direction='both')
                 sensor_values = df_sensor[0].tolist() 
             pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
-    for elem_hour in range(len(valid_processed_measurements)): #Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..)
+    '''Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..) '''
+    for elem_hour in range(len(valid_processed_measurements)): 
         json = {}
-        for key,value in pollutant_array_json.items(): # Recorro por la cantidad de elementos para rearmar el json
+        '''Recorro por la cantidad de elementos para rearmar el json''' 
+        for key,value in pollutant_array_json.items(): 
             if(value!=[]):
                 json[key] = pollutant_array_json[key][elem_hour]
-                if(key=='lat'):#Actualizar posiciones de los qhawaxs con su real ubicacion
+                '''Actualizar posiciones de los qhawaxs con su real ubicacion'''
+                if(key=='lat'):
                     json[key] =  qhawax_specific_location[0]
-                if(key=='lon'):#Actualizar posiciones de los qhawaxs con su real ubicacion
+                if(key=='lon'):
                     json[key] =  qhawax_specific_location[1]
         average_valid_processed_measurement.append(json)
 
@@ -60,9 +64,12 @@ def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
     sort_list_by_hour = []
     total_number_stations = len(measurement_list)
     pivot_initial = initial_timestamp
-    for index_hour in range(last_hours): #Horas totales
-        hour_list = [] #Arreglo de mediciones por hora
-        for index_station in range(total_number_stations): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
+    '''Se itera con las horas totales'''
+    for index_hour in range(last_hours): 
+        '''Se inicializa el arreglo de mediciones por hora'''
+        hour_list = [] 
+        ''' Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos '''
+        for index_station in range(total_number_stations):
             if(index_hour<len(measurement_list[index_station])):
                 if("timestamp_zone" in measurement_list[index_station][index_hour]):
                     datetime_each_station = datetime.datetime.strptime(measurement_list[index_station][index_hour]["timestamp_zone"], '%a, %d %b %Y %H:%M:%S GMT')
@@ -74,8 +81,6 @@ def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
                         measurement_list[index_station].insert(0, {})
         pivot_initial = pivot_initial + datetime.timedelta(hours=1)
         new_hour_list = []
-        print("Impriendo hour list")
-        print(len(hour_list))
         for index_new_hour in range(len(hour_list)):
             flag=False
             for index_new_station in range(len(hour_list[index_new_hour])):
@@ -85,8 +90,6 @@ def sortListOfMeasurementPerHourHistorical(measurement_list,last_hours):
             if(flag==False and len(hour_list[index_new_hour])>0):
                 new_hour_list.append(hour_list[index_new_hour])
         new_hour_list = np.array(new_hour_list)
-        print(new_hour_list)
-        print("\n")
         sort_list_by_hour.append(new_hour_list)
     return sort_list_by_hour
 
@@ -96,9 +99,12 @@ def sortListOfMeasurementPerHourScript(measurement_list,last_hours,weeks):
     sort_list_by_hour = []
     total_number_stations = len(measurement_list)
     pivot_initial = initial_timestamp
-    for index_hour in range(last_hours): #Horas totales
-        hour_list = [] #Arreglo de mediciones por hora
-        for index_station in range(total_number_stations): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
+    '''Se itera con las horas totales'''
+    for index_hour in range(last_hours):
+        '''Se inicializa el arreglo de mediciones por hora'''
+        hour_list = []
+        ''' Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos '''
+        for index_station in range(total_number_stations):
             if(index_hour<len(measurement_list[index_station])):
                 if("timestamp_zone" in measurement_list[index_station][index_hour]):
                     datetime_each_station = datetime.datetime.strptime(measurement_list[index_station][index_hour]["timestamp_zone"], '%a, %d %b %Y %H:%M:%S GMT')
@@ -126,8 +132,10 @@ def sortListOfMeasurementPerHourFuture(measurement_list,last_hours):
     sort_list_by_hour = []
     for i in range(last_hours):
         hour_n = []
-        for j in range(len(measurement_list)): #Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos
-            if(last_hours <= len(measurement_list[j])): #Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado
+        ''' Un qHAWAX puede que no tenga ningun elemento, entonces lo descartamos '''
+        for j in range(len(measurement_list)): 
+            '''Para evitar que se caiga cuando un qhawax le faltan horas en el periodo buscado'''
+            if(last_hours <= len(measurement_list[j])): 
                 list_measurement_by_qhawax_by_hour = convertJsonToList(measurement_list[j][i])
                 list_measurement_by_qhawax_by_hour = np.array(list_measurement_by_qhawax_by_hour)
                 hour_n.append(list_measurement_by_qhawax_by_hour)
@@ -206,7 +214,6 @@ def getInterpolationMethonInOnePoint(spatial_interpolation_dataset, index_column
     if(type(spatial_interpolation_dataset) is list):
         spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
     predicted_values = []
-    #print(len(spatial_interpolation_dataset))
     if(len(spatial_interpolation_dataset)>0):
         spatial_interpolation_dataset_x_column = spatial_interpolation_dataset[:, index_column_x]
         spatial_interpolation_dataset_y_column = spatial_interpolation_dataset[:, index_column_y]
