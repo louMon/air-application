@@ -68,11 +68,14 @@ def getFutureRecordsOfEveryStationByPollutant():
         predicted_measurements = get_data_helper.queryFutureMeasurementByPollutant(station_id,pollutant)
         #Las 18 horas anteriores reales de las estaciones
         historical_measurements = get_data_helper.queryHistoricalMeasurement(station_id, pollutant)
+        #Guardamos las horas reales
+        real_hours = len(predicted_measurements) + len(historical_measurements)
         #Concatenando las mediciones de las 24 horas
         predicted_measurements.extend(historical_measurements)
         predicted_measurements.sort(key = lambda x:x["hour_position"])
         if(predicted_measurements!=[]):
-            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements,24,"web")
+            print("Entreee a predicted_measurements")
+            merged_predicted_measurements = get_data_helper.mergeSameHoursDictionary(predicted_measurements,real_hours,"web")
             if(merged_predicted_measurements!=[]):
                 return make_response(jsonify(merged_predicted_measurements), 200)
         return make_response('There is no future records yet', 404)
