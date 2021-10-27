@@ -22,10 +22,10 @@ GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
 GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
 
-TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
-ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
-#TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
-#ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
+#TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
+#ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
+TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
+ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
 
 #Global variables
 index_column_x = None
@@ -36,10 +36,14 @@ sort_list_without_json = None
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 
 def getListOfMeasurementOfAllModulesHistoricalSpatial(array_module_id,array_qhawax_location):
+    print("getListOfMeasurementOfAllModulesHistoricalSpatial")
     list_of_hours = []
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=last_hours_historical_interpolate-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
+    print("Hora UTC +5 horas")
+    print("Fecha Inicial: {a}".format(a=initial_timestamp))
     final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
+    print("Fecha Final: {a}".format(a=final_timestamp))
     for i in range(len(array_module_id)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(array_module_id[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
@@ -51,6 +55,7 @@ def getListOfMeasurementOfAllModulesHistoricalSpatial(array_module_id,array_qhaw
     return list_of_hours
 
 def getListOfMeasurementOfAllModulesFutureSpatial(array_station_id,array_qhawax_location):
+    print("getListOfMeasurementOfAllModulesFutureSpatial")
     list_of_hours = []
     for i in range(len(array_station_id)): #arreglo de los qhawaxs
         json_params = {'environmental_station_id': str(array_station_id[i])}
@@ -64,7 +69,10 @@ def getListOfMeasurementOfAllModulesFutureSpatial(array_station_id,array_qhawax_
 
 def iterateByGridsHistorical(grid_elem):
     near_qhawaxs = helper.getNearestStations(array_qhawax_location, grid_elem['lat'] , grid_elem['lon'])
-    new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k_value)
+    new_sort_list_without_json = helper.sortBasedNearQhawaxs(near_qhawaxs,sort_list_without_json)
+    removed_values_out_control = helper.removeOutControlValues(new_sort_list_without_json)
+    filtered_sort_list_without_json = helper.newFilterMeasurementBasedOnNearestStations(removed_values_out_control,k_value)
+    convertToNumpyMatrix = helper.convertToNumpyMatrix(filtered_sort_list_without_json)
     dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, \
                                                                              index_column_x, \
                                                                              index_column_y, \
@@ -82,12 +90,13 @@ def iterateByGridsHistorical(grid_elem):
 
 def iterateByGridsFuture(grid_elem):
     near_qhawaxs = helper.getNearestStations(array_qhawax_location, grid_elem['lat'] , grid_elem['lon'])
-    new_sort_list_without_json = helper.filterMeasurementBasedOnNearestStations(near_qhawaxs,sort_list_without_json,k_value)
-    dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(new_sort_list_without_json, \
-                                                                             index_column_x, \
-                                                                             index_column_y, \
-                                                                             grid_elem['lat'], \
-                                                                             grid_elem['lon'])
+    new_sort_list_without_json = helper.sortBasedNearQhawaxs(near_qhawaxs,sort_list_without_json)
+    removed_values_out_control = helper.removeOutControlValues(new_sort_list_without_json)
+    filtered_sort_list_without_json = helper.newFilterMeasurementBasedOnNearestStations(removed_values_out_control,k_value)
+    convertToNumpyMatrix = helper.convertToNumpyMatrix(filtered_sort_list_without_json)
+    dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(convertToNumpyMatrix, \
+                                                                        index_column_x,index_column_y, \
+                                                                        grid_elem['lat'],grid_elem['lon'])
     timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.timedelta(hours=1)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
@@ -112,7 +121,10 @@ if __name__ == '__main__':
 
     #Spatial Interpolation
     measurement_list = getListOfMeasurementOfAllModulesHistoricalSpatial(array_module_id,array_qhawax_location)
-    sort_list_without_json = helper.sortListOfMeasurementPerHourHistorical(measurement_list,last_hours_historical_interpolate)
+    sort_list_without_json = helper.newSortListOfMeasurementPerHourScript(measurement_list,last_hours_historical_interpolate,-1)
+    print("Iterando la listaaaaaaaaaaa")
+    for elem in sort_list_without_json:
+        print(elem)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
@@ -124,9 +136,8 @@ if __name__ == '__main__':
 
     #Future Interpolation
     all_qhawax_station = json.loads(requests.get(GET_UPDATED_QHAWAX).text)
-    qWid_compid = helper.getQhawaxFirstVersion(all_qhawax_station)
     measurement_list = getListOfMeasurementOfAllModulesFutureSpatial(array_station_id,array_qhawax_location)
-    sort_list_without_json = helper.sortListOfMeasurementPerHourFuture(measurement_list,last_hours_future_interpolate)
+    sort_list_without_json = helper.newSortListOfMeasurementPerHourScript(measurement_list,last_hours_future_interpolate,-1)
     dictionary_list_of_index_columns = helper.getDiccionaryListWithEachIndexColumn(sort_list_without_json)
     index_column_x = dictionary_list_of_index_columns[0][name_column_x]
     index_column_y = dictionary_list_of_index_columns[0][name_column_y]
@@ -156,5 +167,3 @@ if __name__ == '__main__':
     print("Remuevo archivo temporal")
     print("Luego de terminar los calculos {a} y luego de leer cada json {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")
-
-
