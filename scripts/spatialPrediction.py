@@ -22,10 +22,10 @@ GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
 GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
 
-#TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
-#ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
-TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
-ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
+TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
+ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
+#TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
+#ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
 
 global array_qhawax_location
 global json_data_pollutant

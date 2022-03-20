@@ -3,7 +3,7 @@
 last_hours_future_interpolate = 6
 
 #Global constanst historical interpolate
-last_hours_historical_interpolate = 5
+last_hours_historical_interpolate = 24
 
 #Global constanst temporal prediction
 time_steps_in = 24
