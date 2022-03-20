@@ -7,7 +7,7 @@ import json
 import pandas as pd
 import math
 
-BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_FONDECYT_ENV_STATION= BASE_URL_IA + 'api/get_all_fondecyt_env_station/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
@@ -15,10 +15,10 @@ GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 column_coordinates_x = 'lon'
 column_coordinates_y = 'lat'
-last_hours =10
-weeks = 14
-k_number_min = 4
-k_number_max = 7
+last_hours =5
+weeks = 17
+k_number_min = 5
+k_number_max = 6
 
 def sortListOfMeasurementPerK(measurement_list,last_hours):#k_times):
     sort_list_by_k = []
@@ -46,8 +46,11 @@ def getListOfMeasurementOfAllModules(qhawax_array,qhawax_location,weeks):
         json_params = {'name': 'qH0'+str(qhawax_array[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
         hourly_processed_measurements = response.json()
-        hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,qhawax_location[i],pollutant_array_json)
-        measurements_per_qhawax.append(hourly_processed_measurements)
+        print(i)
+        print(hourly_processed_measurements)
+        if(len(hourly_processed_measurements)>0):
+        	hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,qhawax_location[i],pollutant_array_json)
+        	measurements_per_qhawax.append(hourly_processed_measurements)
     return measurements_per_qhawax
 
 if __name__ == '__main__':
@@ -71,26 +74,24 @@ if __name__ == '__main__':
 		k_values = []
 		#Esta funcion ordena las estaciones con respecto a la estacion a interpolar
 		near_qhawaxs = helper.getNearestStations(qhawax_location, element_to_interpolate["lat"] , element_to_interpolate["lon"])
-		print("Las estaciones mas cercanas")
+		print("/n Las estaciones mas cercanas")
 		print(near_qhawaxs)
 		new_sort_list_without_json = helper.sortBasedNearQhawaxs(near_qhawaxs,sort_list_without_json)
-		list_of_indexs_column = helper.getDiccionaryListWithEachIndexColumn(new_sort_list_without_json)
-		indice_columna_coordenadas_x = list_of_indexs_column[0][column_coordinates_x]
-		indice_columna_coordenadas_y = list_of_indexs_column[0][column_coordinates_y]
+		print("/n sortBasedNearQhawaxs************")
+		print(new_sort_list_without_json)
 		removed_values_out_control = helper.removeOutControlValues(new_sort_list_without_json)
+		print("/n removeOutControlValues************")
+		print(removed_values_out_control)
 		print("Ahora a interpolar +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
 		for k in range(k_number_min,k_number_max):
 			print("\nNumero k: {a}".format(a=k))
+			#Separar los contaminantes por hora en un json
+			separated_sort_list_without_json = helper.separatePollutants(removed_values_out_control)
 			#Aqui le estoy mandando un arreglo de N horas para que de cada hora se tenga solamente los near_qhawaxs
-			filtered_sort_list_without_json = helper.newFilterMeasurementBasedOnNearestStations(removed_values_out_control,k)
-			print("Luego de filtered_sort_list_without_json")
-			print(filtered_sort_list_without_json)
+			filtered_sort_list_without_json = helper.newFilterMeasurementBasedOnNearestStations(separated_sort_list_without_json,k)
 			convertToNumpyMatrix = helper.convertToNumpyMatrix(filtered_sort_list_without_json)
-			print("Luego de convertToNumpyMatrix")
-			print(convertToNumpyMatrix)
-			conjunto_valores_predichos = helper.getListofPastInterpolationsAtOnePoint(convertToNumpyMatrix, 
-										 indice_columna_coordenadas_x, indice_columna_coordenadas_y, 
-										 element_to_interpolate['lat'], element_to_interpolate['lon'])
+			conjunto_valores_predichos = helper.getListofPastInterpolationsAtOnePoint(convertToNumpyMatrix,  
+										 element_to_interpolate['lat'], element_to_interpolate['lon'],k)
 			k_values.append(conjunto_valores_predichos)
 			print("Longitud del arreglo de k => {a}: {b}".format(a=k, b=len(conjunto_valores_predichos)))
 			print("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
@@ -131,5 +132,5 @@ if __name__ == '__main__':
 
 	#En el CSV colocar las constantes elegidas
 	#Exportar CSV con todo el consolidado de dataframes
-	df_consolidate.to_csv(r'/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/dfconsolidate.csv')
+	df_consolidate.to_csv(r'/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/InSituGausiano.csv')
 	    

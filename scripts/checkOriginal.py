@@ -7,14 +7,14 @@ import json
 import pandas as pd
 import math
 
-BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_FONDECYT_ENV_STATION= BASE_URL_IA + 'api/get_all_fondecyt_env_station/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 last_hours =480
-weeks = 13
+weeks = 20
 k_number_min = 2
 k_number_max = 8
 
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
 	#En el CSV colocar las constantes elegidas
 	#Exportar CSV con todo el consolidado de dataframes
-	df_consolidate.to_csv(r'/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/dfIDW.csv')
+	df_consolidate.to_csv(r'/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/dfGaussiano.csv')
 
 
 

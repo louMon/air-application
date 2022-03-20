@@ -10,7 +10,7 @@ from global_constants import time_steps_in
 import script_helper as helper
 import json
 
-BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
 DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_prediction/'

@@ -43,11 +43,12 @@ def validLimitsByPollutant(pollutant, value_of_array):
         new_value_of_array.append(each_value)
     return new_value_of_array
 
+#No completa nada de mediciones, solo coloca las posiciones
 def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):
     average_valid_processed_measurement = []
-    for sensor_name in valid_processed_measurements[0]: 
+    for sensor_name in valid_processed_measurements[0]:
         if(sensor_name in pollutant_array_json):
-            '''Consolido todas las mediciones de esta estacion de las 24 horas'''
+            '''Consolido todas las mediciones de esta estacion de las N horas'''
             sensor_values = [measurement[sensor_name] if(sensor_name in measurement) else None for measurement in valid_processed_measurements]
             sensor_values = validLimitsByPollutant(sensor_name, sensor_values)
             pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
@@ -155,7 +156,6 @@ def separatePollutants(removed_values_out_control):
         new_sort_list_without_json.append(new_qhawax_hour)
     return new_sort_list_without_json
 
-
 def getPollutantValuesWithException(qhawax_hour,k,pollutant_position,pollutant_name):
     count_to_k = 0
     hour_idx = 0
@@ -258,12 +258,47 @@ def getIDWInterpolation(x, y, z, xi, yi):
     zi = np.dot(weigths.T, z)
     return zi
 
+def areSame(arr):
+    first = arr[0]  
+    for i in range(1, len(arr)):
+        if (arr[i] != first):
+            return False  
+    return True
+
+def getPositionsOfInvalidValues(arr):
+    invalid_positions_arr = []
+    for idx_elem in range(len(arr)):
+        if (arr[idx_elem] == -1):
+            invalid_positions_arr.append(idx_elem)
+    return invalid_positions_arr
+
+#[2,4,9]
+#[1,2,3,4,5,6,7,8,90,10]
+def removeInvalidElements(arrPositions, arrElements):
+    idx_positions = 0
+    resulted_array = []
+    for idx_elem in range(len(arrElements)):
+        if(idx_positions<len(arrPositions)):
+            if(idx_elem<arrPositions[idx_positions]):
+                resulted_array.append(arrElements[idx_elem])
+            else: idx_positions+=1
+        else: break
+    return resulted_array
+
 #####Interpolacion con Krigging
 def getKrigingInterpolation(x, y, z, xi, yi):
-    #modelo_kriging = OrdinaryKriging(x, y, z, variogram_model="linear")
-    modelo_kriging = UniversalKriging(x, y, z, variogram_model="gaussian")
-    zi = modelo_kriging.execute("points", xi, yi)
-    return zi[0]
+    invalid_positions = getPositionsOfInvalidValues(z)
+    x = removeInvalidElements(invalid_positions, x)
+    y = removeInvalidElements(invalid_positions, y)
+    z = removeInvalidElements(invalid_positions, z)
+    if(areSame(z)==False):
+        #modelo_kriging = OrdinaryKriging(x, y, z, variogram_model="linear")
+        modelo_kriging = OrdinaryKriging(x, y, z, variogram_model="gaussian")
+        #modelo_kriging = OrdinaryKriging(x, y, z, variogram_model="exponential")
+        #modelo_kriging = OrdinaryKriging(x, y, z, variogram_model="spherical")
+        zi = modelo_kriging.execute("points", xi, yi)
+        return zi[0]
+    return None
 
 ####Interpolacion con NNIDW
 def getNNIDWInterpolation(x, y, z, xi, yi):
@@ -273,15 +308,29 @@ def getNNIDWInterpolation(x, y, z, xi, yi):
     zi = modelo_nnidw(puntos_evaluacion)
     return zi[0]
 
+def getPollutantName(pollutant_position):
+    if(pollutant_position==0): return 'CO'
+    elif(pollutant_position==1): return 'NO2'
+    elif(pollutant_position==2): return 'PM25'
+    else: None
+
 def getPollutantAndPositionsArray(spatial_interpolation_dataset, pollutant_position,k):
     pollutant_array,lat_array,lon_array= [],[],[]
     for k_idx in range(len(spatial_interpolation_dataset)):
-        pollutant_value = spatial_interpolation_dataset[k_idx][pollutant_position][0]
-        lat_value = spatial_interpolation_dataset[k_idx][pollutant_position][1]
-        lon_value = spatial_interpolation_dataset[k_idx][pollutant_position][2]
+        pollutantName = getPollutantName(pollutant_position)
+        pollutant_value = spatial_interpolation_dataset[k_idx][pollutantName]
+        lat_value = spatial_interpolation_dataset[k_idx]['lat']
+        lon_value = spatial_interpolation_dataset[k_idx]['lon']
         pollutant_array.append(pollutant_value)
         lat_array.append(lat_value)
         lon_array.append(lon_value)
+
+        #pollutant_value = spatial_interpolation_dataset[k_idx][pollutantName][0]
+        #lat_value = spatial_interpolation_dataset[k_idx][pollutantName][1]
+        #lon_value = spatial_interpolation_dataset[k_idx][pollutantName][2]
+        #pollutant_array.append(pollutant_value)
+        #lat_array.append(lat_value)
+        #lon_array.append(lon_value)
     return pollutant_array,lat_array,lon_array
 
 def getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_column_x, predict_column_y, k):
@@ -291,9 +340,10 @@ def getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_colu
     if(len(spatial_interpolation_dataset)>0):
         for polluntant_idx in range(pollutants):
             pollutant_array,lat_array,lon_array = getPollutantAndPositionsArray(spatial_interpolation_dataset, polluntant_idx,k)
-            value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
-            #value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
-            #value_interpolated = getNNIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
+                value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
+                value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
             predicted_values.append(value_interpolated)
         predicted_values.insert(pm1_index, 0.0)
     return np.array(predicted_values)
