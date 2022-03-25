@@ -7,7 +7,8 @@ import json
 import pandas as pd
 import math
 
-BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
+#BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'https://air-quality.pucp-air-quality.cloudns.ph/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_FONDECYT_ENV_STATION= BASE_URL_IA + 'api/get_all_fondecyt_env_station/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'

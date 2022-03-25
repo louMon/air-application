@@ -12,7 +12,8 @@ import script_helper as helper
 from global_constants import pool_size_interpolate, last_hours_future_interpolate, last_hours_historical_interpolate, \
                              name_column_x, name_column_y, dictionary_of_var_index_prediction,k_value
 
-BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
+#BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'https://air-quality.pucp-air-quality.cloudns.ph/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
