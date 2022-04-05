@@ -28,14 +28,7 @@ ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
 #TEMPORAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/temporal_file.csv'
 #ORIGINAL_FILE_ADDRESS = '/Users/lourdesmontalvo/Documents/Projects/Fondecyt/air-application/original_file.csv'
 
-global array_qhawax_location
-global json_data_pollutant
-global sort_list_without_json
-global pollutant_array_json
-
 #Global variables
-#index_column_x = None
-#index_column_y = None
 json_data_pollutant = None
 array_qhawax_location = None
 sort_list_without_json = None
@@ -63,11 +56,11 @@ def getListOfMeasurementOfAllModulesFutureSpatial(array_station_id,array_qhawax_
     for i in range(len(array_station_id)): #arreglo de los qhawaxs
         json_params = {'environmental_station_id': str(array_station_id[i])}
         response = requests.get(GET_HOURLY_FUTURE_RECORDS, params=json_params)
-        hourly_processed_measurements = response.json()
-        if len(hourly_processed_measurements) < last_hours_future_interpolate/3: #La cantidad de horas debe ser mayor a la tercera parte de la cantidad total de horas permitidas.
-            continue
-        hourly_processed_measurements = helper.completeHourlyValuesByQhawax(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
-        list_of_hours.append(hourly_processed_measurements)
+        if response.status_code == 200:
+            hourly_processed_measurements = response.json()
+            if(len(hourly_processed_measurements)>0):
+                hourly_processed_measurements = helper.completeHourlyValuesByQhawaxFutureInterpolation(hourly_processed_measurements,array_qhawax_location[i],pollutant_array_json)
+                list_of_hours.append(hourly_processed_measurements)
     return list_of_hours
 
 def iterateByGridsHistorical(grid_elem):
@@ -108,12 +101,12 @@ def iterateByGridsFuture(grid_elem):
     new_sort_list_without_json = helper.sortBasedNearQhawaxs(near_qhawaxs,sort_list_without_json)
     removed_values_out_control = helper.removeOutControlValues(new_sort_list_without_json)
     #Separar los contaminantes por hora en un json
-    separated_sort_list_without_json = helper.separatePollutants(removed_values_out_control)
+    separated_sort_list_without_json = helper.separatePollutantsFuture(removed_values_out_control)
     filtered_sort_list_without_json = helper.newFilterMeasurementBasedOnNearestStations(separated_sort_list_without_json,k_value)
     convertToNumpyMatrix = helper.convertToNumpyMatrix(filtered_sort_list_without_json)
-    dataset_interpolated = helper.getListofPastInterpolationsAtOnePoint(convertToNumpyMatrix, \
+    dataset_interpolated = helper.getListofPastInterpolationsAtOnePointFuture(convertToNumpyMatrix, \
                                                                         grid_elem['lat'],grid_elem['lon'],k_value)
-    timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.tzutcimedelta(hours=1)
+    timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.timedelta(hours=1)
     for i in range(len(dataset_interpolated)):
         for key,value in dictionary_of_var_index_prediction.items():
             pollutant_id = helper.getPollutantID(json_data_pollutant,key)

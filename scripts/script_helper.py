@@ -67,6 +67,31 @@ def completeHourlyValuesByQhawax(valid_processed_measurements,qhawax_specific_lo
         average_valid_processed_measurement.append(json)
     return average_valid_processed_measurement
 
+#No completa nada de mediciones, solo coloca las posiciones
+def completeHourlyValuesByQhawaxFutureInterpolation(valid_processed_measurements,qhawax_specific_location,pollutant_array_json):
+    average_valid_processed_measurement = []
+    for sensor_name in valid_processed_measurements[0]:
+        if(sensor_name in pollutant_array_json or sensor_name == 'timestamp'):
+            '''Consolido todas las mediciones de esta estacion de las N horas'''
+            sensor_values = [measurement[sensor_name] if(sensor_name in measurement) else None for measurement in valid_processed_measurements]
+            sensor_values = validLimitsByPollutant(sensor_name, sensor_values)
+            if sensor_name == 'timestamp' : sensor_name = 'timestamp_zone'
+            pollutant_array_json = verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values)
+    '''Recorro por la cantidad de horas de cada qhawax (algunos tienen 24, 23, 22..) '''
+    for elem_hour in range(len(valid_processed_measurements)): 
+        json = {}
+        '''Recorro por la cantidad de elementos para rearmar el json''' 
+        for key,value in pollutant_array_json.items(): 
+            if(value!=[]):
+                json[key] = pollutant_array_json[key][elem_hour]
+                '''Actualizar posiciones de los qhawaxs con su real ubicacion'''
+                if(key=='lat'):
+                    json[key] =  qhawax_specific_location[0] 
+                elif(key=='lon'):
+                    json[key] =  qhawax_specific_location[1] 
+        average_valid_processed_measurement.append(json)
+    return average_valid_processed_measurement
+
 def convertJsonToList(json_measurement):
     list_of_measurements = []
     for i in range(len(array_columns)):
@@ -143,6 +168,12 @@ def createJsonEachPollutant(pollutant,monitoring_stations,hour_n):
     hour_n.append(dict_N)
     return hour_n
 
+def createJsonEachPollutantFuture(pollutant,monitoring_stations,hour_n):
+    dict_N= {pollutant:monitoring_stations[pollutant],'lat':monitoring_stations['lat'],
+               'lon':monitoring_stations['lon'],'timestamp_zone':monitoring_stations['timestamp_zone']}
+    hour_n.append(dict_N)
+    return hour_n
+
 def separatePollutants(removed_values_out_control):
     new_sort_list_without_json = []
     for qhawax_hour in removed_values_out_control:
@@ -152,6 +183,19 @@ def separatePollutants(removed_values_out_control):
             hour_n = createJsonEachPollutant('CO',monitoring_stations,hour_n)
             hour_n = createJsonEachPollutant('NO2',monitoring_stations, hour_n)
             hour_n = createJsonEachPollutant('PM25',monitoring_stations,hour_n)
+            new_qhawax_hour.append(hour_n)
+        new_sort_list_without_json.append(new_qhawax_hour)
+    return new_sort_list_without_json
+
+def separatePollutantsFuture(removed_values_out_control):
+    new_sort_list_without_json = []
+    for qhawax_hour in removed_values_out_control:
+        new_qhawax_hour = []
+        for monitoring_stations in qhawax_hour:
+            hour_n = []
+            hour_n = createJsonEachPollutantFuture('CO',monitoring_stations,hour_n)
+            hour_n = createJsonEachPollutantFuture('NO2',monitoring_stations, hour_n)
+            hour_n = createJsonEachPollutantFuture('PM25',monitoring_stations,hour_n)
             new_qhawax_hour.append(hour_n)
         new_sort_list_without_json.append(new_qhawax_hour)
     return new_sort_list_without_json
@@ -326,13 +370,17 @@ def getPollutantAndPositionsArray(spatial_interpolation_dataset, pollutant_posit
         pollutant_array.append(pollutant_value)
         lat_array.append(lat_value)
         lon_array.append(lon_value)
+    return pollutant_array,lat_array,lon_array
 
-        #pollutant_value = spatial_interpolation_dataset[k_idx][pollutantName][0]
-        #lat_value = spatial_interpolation_dataset[k_idx][pollutantName][1]
-        #lon_value = spatial_interpolation_dataset[k_idx][pollutantName][2]
-        #pollutant_array.append(pollutant_value)
-        #lat_array.append(lat_value)
-        #lon_array.append(lon_value)
+def getPollutantAndPositionsArrayFuture(spatial_interpolation_dataset, pollutant_position,k):
+    pollutant_array,lat_array,lon_array= [],[],[]
+    for k_idx in range(len(spatial_interpolation_dataset)):
+        pollutant_value = spatial_interpolation_dataset[k_idx][pollutant_position][0]
+        lat_value = spatial_interpolation_dataset[k_idx][pollutant_position][1]
+        lon_value = spatial_interpolation_dataset[k_idx][pollutant_position][2]
+        pollutant_array.append(pollutant_value)
+        lat_array.append(lat_value)
+        lon_array.append(lon_value)
     return pollutant_array,lat_array,lon_array
 
 def getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_column_x, predict_column_y, k):
@@ -350,9 +398,27 @@ def getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_colu
         predicted_values.insert(pm1_index, 0.0)
     return np.array(predicted_values)
 
+def getInterpolationMethodInOnePointFuture(spatial_interpolation_dataset, predict_column_x, predict_column_y, k):
+    if(type(spatial_interpolation_dataset) is list):
+        spatial_interpolation_dataset = np.array(spatial_interpolation_dataset)
+    predicted_values = []
+    if(len(spatial_interpolation_dataset)>0):
+        for polluntant_idx in range(pollutants):
+            pollutant_array,lat_array,lon_array = getPollutantAndPositionsArrayFuture(spatial_interpolation_dataset, polluntant_idx,k)
+            if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
+                value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
+                value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            predicted_values.append(value_interpolated)
+        predicted_values.insert(pm1_index, 0.0)
+    return np.array(predicted_values)
 
 def getListofPastInterpolationsAtOnePoint(spatial_interpolation_dataset_list, predict_column_x, predict_column_y,k):
     predicted_values_dataset = [getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_column_x, predict_column_y,k) for spatial_interpolation_dataset in spatial_interpolation_dataset_list]
+    return np.array(predicted_values_dataset)
+
+def getListofPastInterpolationsAtOnePointFuture(spatial_interpolation_dataset_list, predict_column_x, predict_column_y,k):
+    predicted_values_dataset = [getInterpolationMethodInOnePointFuture(spatial_interpolation_dataset, predict_column_x, predict_column_y,k) for spatial_interpolation_dataset in spatial_interpolation_dataset_list]
     return np.array(predicted_values_dataset)
 
 def verifyPollutantSensor(sensor_name,pollutant_array_json,sensor_values):
