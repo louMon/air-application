@@ -42,7 +42,6 @@ sort_list_without_json = None
 pollutant_array_json = {'CO': [], 'NO2': [], 'PM25': [],'timestamp_zone':[],'lat':[],'lon':[],'alt':[]}
 
 def getListOfMeasurementOfAllModulesHistoricalSpatial(array_module_id,array_qhawax_location):
-    print("getListOfMeasurementOfAllModulesHistoricalSpatial")
     list_of_hours = []
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=last_hours_historical_interpolate-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo

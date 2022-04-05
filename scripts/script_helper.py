@@ -277,13 +277,15 @@ def getPositionsOfInvalidValues(arr):
 def removeInvalidElements(arrPositions, arrElements):
     idx_positions = 0
     resulted_array = []
-    for idx_elem in range(len(arrElements)):
-        if(idx_positions<len(arrPositions)):
-            if(idx_elem<arrPositions[idx_positions]):
-                resulted_array.append(arrElements[idx_elem])
-            else: idx_positions+=1
-        else: break
-    return resulted_array
+    if(len(arrPositions)!=0):
+        for idx_elem in range(len(arrElements)):
+            if(idx_positions<len(arrPositions)):
+                if(idx_elem<arrPositions[idx_positions]):
+                    resulted_array.append(arrElements[idx_elem])
+                else: idx_positions+=1
+            else: break
+        return resulted_array
+    return arrElements
 
 #####Interpolacion con Krigging
 def getKrigingInterpolation(x, y, z, xi, yi):
