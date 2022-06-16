@@ -122,6 +122,9 @@ def saveMeasurement(row):
         writer.writerow([int(row[0]), row[1],row[2], None if(row[3]=='') else row[3],row[4],row[5]])
 
 if __name__ == '__main__':
+    
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
+    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
     #General variables
     #json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
     #array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
@@ -148,8 +151,7 @@ if __name__ == '__main__':
         print("Remuevo archivo original")
         os.remove(ORIGINAL_FILE_ADDRESS)
 
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":1,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
-    response = requests.post(UPDATE_RUNNING_TIMESTAMP, json={"model_id":3,"last_running_timestamp":str(datetime.datetime.now().replace(minute=0,second=0, microsecond=0))})
+
     
     with open(TEMPORAL_FILE_ADDRESS) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
