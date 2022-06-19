@@ -291,15 +291,30 @@ def distanceMatrix(x0, y0, x1, y1):
     d1 = np.subtract.outer(observado[:,1], interpolado[:,1])
     return np.hypot(d0, d1)
 
+
+def getRealNotNoneElem(pivot, matrizToRemove):
+    listToRemove = list(matrizToRemove[0])
+    index = 0
+    for z_elem in pivot:
+        if(z_elem == None):
+            elemReal = listToRemove[index]
+            listToRemove.remove(elemReal)
+            pivot.remove(z_elem)
+        index+=1
+    finalMatriz= np.array([np.array(listToRemove),])
+    return pivot, finalMatriz
+
 #####Interpolacion con IDW
 def getIDWInterpolation(x, y, z, xi, yi):
+    print("Dentro de getIDWInterpolation")
     distances = distanceMatrix(x,y, xi,yi)
     # IDW, weigths are the inverse of the distance inverse
     weigths = 1.0 / distances
     # Add all the weights to 1
     weigths /= weigths.sum(axis=0)
     # Multiply all the weights of each interpolated point by all the observed values ​​of the variable to be interpolated
-    zi = np.dot(weigths.T, z)
+    realZ, realWeigths  =getRealNotNoneElem(z, weigths.T)
+    zi = np.dot(realWeigths, realZ)
     return zi
 
 def areSame(arr):
