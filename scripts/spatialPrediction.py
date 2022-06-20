@@ -140,17 +140,21 @@ if __name__ == '__main__':
 
     #Future Interpolation
     print("************************************Future Interpolation**********************************************")
-    pool = multiprocessing.Pool(pool_size_interpolate)
-    pool_results = pool.map(iterateByGridsFuture, json_data_grid)
-    pool.close()
-    pool.join()
+    #pool = multiprocessing.Pool(pool_size_interpolate)
+    #pool_results = pool.map(iterateByGridsFuture, json_data_grid)
+    #pool.close()
+    #pool.join()
     
     start_time = datetime.datetime.now()
+    print("Termine la prediccion espacial")
+    print(start_time)
     #Borrado de datos de la tabla original
     if(os.path.isfile(ORIGINAL_FILE_ADDRESS)):
         print("Remuevo archivo original")
         os.remove(ORIGINAL_FILE_ADDRESS)
 
+    print("Escribiendo en el origen!!")
+    print(start_time)
 
     
     with open(TEMPORAL_FILE_ADDRESS) as csv_file:
