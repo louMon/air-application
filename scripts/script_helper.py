@@ -404,10 +404,10 @@ def getInterpolationMethodInOnePoint(spatial_interpolation_dataset, predict_colu
     if(len(spatial_interpolation_dataset)>0):
         for polluntant_idx in range(pollutants):
             pollutant_array,lat_array,lon_array = getPollutantAndPositionsArray(spatial_interpolation_dataset, polluntant_idx,k)
-            if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
-                value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
-            else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
-                value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            #if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
+            value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            #else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
+            #    value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
             predicted_values.append(value_interpolated)
         predicted_values.insert(pm1_index, 0.0)
     return np.array(predicted_values)
@@ -419,10 +419,10 @@ def getInterpolationMethodInOnePointFuture(spatial_interpolation_dataset, predic
     if(len(spatial_interpolation_dataset)>0):
         for polluntant_idx in range(pollutants):
             pollutant_array,lat_array,lon_array = getPollutantAndPositionsArrayFuture(spatial_interpolation_dataset, polluntant_idx,k)
-            if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
-                value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
-            else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
-                value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            #if(polluntant_idx==0): #Cuando es el caso de Monoxido de Carbono se aplica IDW (0=CO)
+            value_interpolated = getIDWInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
+            #else: #Cuando es el caso de NO2 o PM2.5 se aplica Kriging Gausiano
+            #    value_interpolated = getKrigingInterpolation(lon_array, lat_array, pollutant_array, predict_column_x, predict_column_y)
             predicted_values.append(value_interpolated)
         predicted_values.insert(pm1_index, 0.0)
     return np.array(predicted_values)
