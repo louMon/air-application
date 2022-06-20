@@ -9,7 +9,7 @@ last_hours_historical_interpolate = 24
 time_steps_in = 24
 
 pool_size_interpolate = 7
-k_value=5
+k_value=4
 name_column_x = 'lon'
 name_column_y = 'lat'
 dictionary_of_var_index_prediction= {'CO': 0,'NO2': 1, 'PM25': 2}
