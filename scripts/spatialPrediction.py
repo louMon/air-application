@@ -18,10 +18,10 @@ BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
 GET_ALL_ACTIVE_POLLUTANTS = BASE_URL_IA+ 'api/get_all_active_pollutants/'
 UPDATE_RUNNING_TIMESTAMP =BASE_URL_IA + 'api/update_timestamp_running/'
 GET_HOURLY_DATA_PER_QHAWAX = BASE_URL_QAIRA + 'api/air_quality_measurements_period/'
-GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_env_station/'
+GET_ALL_ENV_STATION= BASE_URL_IA + 'api/get_all_fondecyt_env_station/'
 GET_ALL_GRID = BASE_URL_IA + 'api/get_all_grid/'
 GET_HOURLY_FUTURE_RECORDS = BASE_URL_IA + 'api/get_future_records_of_every_station/'
-GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
+#GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
 
 TEMPORAL_FILE_ADDRESS = '/var/www/html/air-application/temporal_file.csv'
 ORIGINAL_FILE_ADDRESS = '/var/www/html/air-application/original_file.csv'
@@ -93,7 +93,7 @@ def iterateByGridsFuture(grid_elem):
     json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
     json_all_env_station = json.loads(requests.get(GET_ALL_ENV_STATION).text)
     array_station_id, array_module_id,array_qhawax_location = helper.getDetailOfEnvStation(json_all_env_station)
-    all_qhawax_station = json.loads(requests.get(GET_UPDATED_QHAWAX).text)
+    #all_qhawax_station = json.loads(requests.get(GET_UPDATED_QHAWAX).text)
     measurement_list = getListOfMeasurementOfAllModulesFutureSpatial(array_station_id,array_qhawax_location)
     sort_list_without_json = helper.newSortListOfMeasurementPerHourScript(measurement_list,last_hours_future_interpolate,-1)
 
