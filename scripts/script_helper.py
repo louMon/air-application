@@ -306,7 +306,6 @@ def getRealNotNoneElem(pivot, matrizToRemove):
 
 #####Interpolacion con IDW
 def getIDWInterpolation(x, y, z, xi, yi):
-    print("Dentro de getIDWInterpolation")
     distances = distanceMatrix(x,y, xi,yi)
     # IDW, weigths are the inverse of the distance inverse
     weigths = 1.0 / distances
