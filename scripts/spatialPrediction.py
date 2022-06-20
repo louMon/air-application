@@ -139,11 +139,11 @@ if __name__ == '__main__':
     pool.join()
 
     #Future Interpolation
-    #print("************************************Future Interpolation**********************************************")
-    #pool = multiprocessing.Pool(pool_size_interpolate)
-    #pool_results = pool.map(iterateByGridsFuture, json_data_grid)
-    #pool.close()
-    #pool.join()
+    print("************************************Future Interpolation**********************************************")
+    pool = multiprocessing.Pool(pool_size_interpolate)
+    pool_results = pool.map(iterateByGridsFuture, json_data_grid)
+    pool.close()
+    pool.join()
     
     start_time = datetime.datetime.now()
     #Borrado de datos de la tabla original
