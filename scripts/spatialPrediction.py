@@ -38,10 +38,7 @@ def getListOfMeasurementOfAllModulesHistoricalSpatial(array_module_id,array_qhaw
     list_of_hours = []
     final_timestamp = datetime.datetime.now(dateutil.tz.tzutc()).replace(minute=0, second=0, microsecond=0) #hora del servidor
     initial_timestamp = (final_timestamp - datetime.timedelta(hours=last_hours_historical_interpolate-1)).strftime("%d-%m-%Y %H:%M:%S") #cantidad de horas que se vaya a utilizar como comparativo
-    print("Hora UTC +5 horas")
-    print("Fecha Inicial: {a}".format(a=initial_timestamp))
     final_timestamp = final_timestamp.strftime("%d-%m-%Y %H:%M:%S")
-    print("Fecha Final: {a}".format(a=final_timestamp))
     for i in range(len(array_module_id)): #arreglo de los qhawaxs
         json_params = {'name': 'qH0'+str(array_module_id[i]),'initial_timestamp':initial_timestamp,'final_timestamp':final_timestamp}
         response = requests.get(GET_HOURLY_DATA_PER_QHAWAX, params=json_params)
@@ -143,7 +140,7 @@ if __name__ == '__main__':
     print("Termine interpolacion espacial pasada")
     print(datetime.datetime.now())
 
-    time.sleep(120)
+    time.sleep(100)
 
     print("Iniciando interpolacion espacial futura")
     print(datetime.datetime.now())
@@ -158,7 +155,7 @@ if __name__ == '__main__':
     print("Termine interpolacion espacial futura")
     print(datetime.datetime.now())
 
-    time.sleep(120)
+    time.sleep(100)
 
     print("Iniciando escritura")
     print(datetime.datetime.now())
@@ -169,7 +166,7 @@ if __name__ == '__main__':
         os.remove(ORIGINAL_FILE_ADDRESS)
 
     print("Escribiendo en el origen!!")
-    print(start_time)
+    print(datetime.datetime.now())
 
     
     with open(TEMPORAL_FILE_ADDRESS) as csv_file:
