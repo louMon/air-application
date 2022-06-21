@@ -140,10 +140,10 @@ if __name__ == '__main__':
 
     #Future Interpolation
     print("************************************Future Interpolation**********************************************")
-    #pool = multiprocessing.Pool(pool_size_interpolate)
-    #pool_results = pool.map(iterateByGridsFuture, json_data_grid)
-    #pool.close()
-    #pool.join()
+    pool = multiprocessing.Pool(pool_size_interpolate)
+    pool_results = pool.map(iterateByGridsFuture, json_data_grid)
+    pool.close()
+    pool.join()
     
     start_time = datetime.datetime.now()
     print("Termine la prediccion espacial")
