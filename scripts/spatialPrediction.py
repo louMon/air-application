@@ -168,13 +168,14 @@ if __name__ == '__main__':
     print("Escribiendo en el origen!!")
     print(datetime.datetime.now())
 
-    
-    with open(TEMPORAL_FILE_ADDRESS) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        pool = multiprocessing.Pool(pool_size_interpolate)
-        pool_results = pool.map(saveMeasurement, csv_reader)
-        pool.close()
-        pool.join()
+    os.system("cp temporal_file.csv original_file.csv")
+
+    #with open(TEMPORAL_FILE_ADDRESS) as csv_file:
+    #    csv_reader = csv.reader(csv_file, delimiter=',')
+    #    pool = multiprocessing.Pool(pool_size_interpolate)
+    #    pool_results = pool.map(saveMeasurement, csv_reader)
+    #    pool.close()
+    #    pool.join()
     #Borrado de datos de la tabla temporal       
     os.remove(TEMPORAL_FILE_ADDRESS)
     print("Remuevo archivo temporal")
