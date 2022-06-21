@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import script_helper as helper
 from global_constants import pool_size_interpolate, last_hours_future_interpolate, last_hours_historical_interpolate, \
-                             name_column_x, name_column_y, dictionary_of_var_index_prediction,k_value
+                             name_column_x, name_column_y, dictionary_of_var_index_prediction,k_value,pool_size_interpolate_writer
 
 #BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
 BASE_URL_IA = 'https://air-quality.pucp-air-quality.cloudns.ph/'
@@ -168,16 +168,15 @@ if __name__ == '__main__':
     print("Escribiendo en el origen!!")
     print(datetime.datetime.now())
 
-    os.system("cp temporal_file.csv original_file.csv")
+    #os.system(f"cp {TEMPORAL_FILE_ADDRESS} {ORIGINAL_FILE_ADDRESS}")
 
-    #with open(TEMPORAL_FILE_ADDRESS) as csv_file:
-    #    csv_reader = csv.reader(csv_file, delimiter=',')
-    #    pool = multiprocessing.Pool(pool_size_interpolate)
-    #    pool_results = pool.map(saveMeasurement, csv_reader)
-    #    pool.close()
-    #    pool.join()
+    with open(TEMPORAL_FILE_ADDRESS) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        pool = multiprocessing.Pool(pool_size_interpolate_writer)
+        pool_results = pool.map(saveMeasurement, csv_reader)
+        pool.close()
+        pool.join()
     #Borrado de datos de la tabla temporal       
     os.remove(TEMPORAL_FILE_ADDRESS)
     print("Remuevo archivo temporal")
-    print("Luego de terminar los calculos {a} y luego de leer cada json {b}".format(a=start_time,b=datetime.datetime.now()))
     print("===================================================================================")

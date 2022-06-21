@@ -7,7 +7,7 @@ last_hours_historical_interpolate = 24
 
 #Global constanst temporal prediction
 time_steps_in = 24
-
+pool_size_interpolate_writer=6
 pool_size_interpolate = 4
 k_value=5
 name_column_x = 'lon'
