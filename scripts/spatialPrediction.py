@@ -131,12 +131,22 @@ if __name__ == '__main__':
     json_data_grid = json.loads(requests.get(GET_ALL_GRID).text) 
     #json_data_pollutant = json.loads(requests.get(GET_ALL_ACTIVE_POLLUTANTS).text) 
 
+    print("Iniciando interpolacion espacial pasada")
+    print(datetime.datetime.now())
+
     #Spatial Interpolation
     print("************************************Spatial Interpolation**********************************************")
     pool = multiprocessing.Pool(pool_size_interpolate)
     pool_results = pool.map(iterateByGridsHistorical, json_data_grid)
     pool.close()
     pool.join()
+    print("Termine interpolacion espacial pasada")
+    print(datetime.datetime.now())
+
+    time.sleep(120)
+
+    print("Iniciando interpolacion espacial futura")
+    print(datetime.datetime.now())
 
     #Future Interpolation
     print("************************************Future Interpolation**********************************************")
@@ -145,9 +155,14 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
     
-    start_time = datetime.datetime.now()
-    print("Termine la prediccion espacial")
-    print(start_time)
+    print("Termine interpolacion espacial futura")
+    print(datetime.datetime.now())
+
+    time.sleep(120)
+
+    print("Iniciando escritura")
+    print(datetime.datetime.now())
+
     #Borrado de datos de la tabla original
     if(os.path.isfile(ORIGINAL_FILE_ADDRESS)):
         print("Remuevo archivo original")
