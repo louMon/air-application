@@ -10,6 +10,7 @@ import datetime
 import requests
 import json
 import csv
+import math
 
 session = db.session
 time_steps_in=18
@@ -132,9 +133,10 @@ def setAverageValuesByHour(predicted_measurements):
 def getMaxMinOfMeasurements(predicted_measurements):
     ug_m3_measurement = []
     for hour_element in predicted_measurements:
-        hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(measurement!=None) ]
+        hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(math.isnan(measurement)!=True and measurement!=None) ]
         arr_ug_m3_value = np.array(hour_element["ug_m3_value"])
         ug_m3_measurement = np.append(ug_m3_measurement, arr_ug_m3_value)
+    
     max_measurement_by_pollutant = np.max(ug_m3_measurement)
     min_measurement_by_pollutant = np.min(ug_m3_measurement)
     median_measurement_by_pollutant = np.median(ug_m3_measurement)
