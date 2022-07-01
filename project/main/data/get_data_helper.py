@@ -124,7 +124,7 @@ def queryTotalSpatialMeasurementByPollutant(pollutant_name):
 def setAverageValuesByHour(predicted_measurements):
     new_predicted_measurements = []
     for hour_element in predicted_measurements:
-      hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(measurement!=None) ]
+      hour_element["ug_m3_value"] = [measurement for measurement in hour_element["ug_m3_value"] if(math.isnan(measurement)!=True and measurement!=None) ]
       hour_element["timestamp"] = hour_element["timestamp"][0]
       hour_element["hour_position"] = hour_element["hour_position"][0]
       new_predicted_measurements.append(hour_element)
