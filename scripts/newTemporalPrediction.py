@@ -10,9 +10,10 @@ from global_constants import time_steps_in
 import script_helper as helper
 import json
 
-BASE_URL_IA = 'https://pucp-calidad-aire-api.qairadrones.com/'
+#BASE_URL_IA = 'http://pucp-calidad-aire-api.qairadrones.com/'
+BASE_URL_IA = 'https://air-quality.pucp-air-quality.cloudns.ph/'
 BASE_URL_QAIRA = 'https://qairamapnapi.qairadrones.com/'
-GET_UPDATED_QHAWAX = BASE_URL_QAIRA + '/api/QhawaxFondecyt/'
+GET_UPDATED_QHAWAX = BASE_URL_QAIRA + 'api/QhawaxFondecyt/'
 DELETE_ALL_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/delete_all_temporal_prediction/'
 STORE_TEMPORAL_PREDICTION = BASE_URL_IA + 'api/store_temporal_prediction/'
 RECORD_LAST_TEMPORAL_TIMESTAMP = BASE_URL_IA + 'api/update_timestamp_running/'
@@ -45,10 +46,11 @@ def time_difference_features(X_input_norm, n_target_values):
     return np.array(X_features_differences)
 
 def predict_air_quality(data, value_type, model, n_features, n_target_values, n_output, time_steps_in, vector_max, vector_min):
-
     if (data == ("Valid Measurements not found") or (data == "Average Valid Processed Data not found")):
+        print(data)
         y_predicted = np.ones(n_output)*np.nan   
     else:
+      print("Generate array of pollutant data (always 18 elements initialized with NaN values so the missing will be interpolated).")
       # Generate array of pollutant data (always 18 elements initialized with NaN values so the missing will be interpolated).
       X_input = np.ones((time_steps_in,n_features))*np.nan
       for i in range(len(data)):
@@ -130,7 +132,13 @@ def formatMeasurements(value):
 
 if __name__ == '__main__':
     all_qhawax_station = json.loads(requests.get(GET_UPDATED_QHAWAX).text)
-    qWid_compid = helper.getQhawaxFirstVersion(all_qhawax_station)
+    qhawax_cercado_de_lima = ['qH038','qH039','qH040','qH041','qH046','qH047','qH048','qH049','qH050','qH054']
+    list_of_real_qhawaxs = []
+    for elem in all_qhawax_station:
+      if elem['name'] in qhawax_cercado_de_lima:
+        list_of_real_qhawaxs.append(elem)
+
+    qWid_compid = helper.getQhawaxFirstVersion(list_of_real_qhawaxs)
 
     time_now = datetime.datetime.now().strftime("%d-%m-%Y %H:%M:%S") 
     time_nsteps_before = (datetime.datetime.now() - datetime.timedelta(hours=time_steps_in)).strftime("%d-%m-%Y %H:%M:%S")
@@ -152,6 +160,7 @@ if __name__ == '__main__':
 
     # API-Endpoint
     for station_info in qWid_compid:
+        print(station_info)
         # API-Parameters:
         qhawax_id = station_info[0]
         company_id = station_info[1]
@@ -173,12 +182,14 @@ if __name__ == '__main__':
         compid.append(company_id)
     response_delete = requests.post(DELETE_ALL_TEMPORAL_PREDICTION)
     for i in range(len(qWid)):
+        print(i)
         send_json = []
         timestamp = datetime.datetime.now().replace(minute=0,second=0, microsecond=0) + datetime.timedelta(hours=1)
         for j in range(n_output):
             hour_station_json = {"CO_ug_m3":formatMeasurements(CO[i][j]),"H2S_ug_m3":None,"NO2_ug_m3":formatMeasurements(NO2[i][j]),
                                  "O3_ug_m3":None,"SO2_ug_m3":None,"PM10":None,"PM25":formatMeasurements(PM25[i][j]), 
                                  "hour_position":(j+1),"timestamp":str(timestamp)}
+            print(hour_station_json)
             send_json.append(hour_station_json)
             timestamp = timestamp + datetime.timedelta(hours=1)
         
